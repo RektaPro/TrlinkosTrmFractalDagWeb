@@ -61,7 +61,7 @@ class Trainer:
         # Scaler pour AMP (mixed precision)
         self.scaler = torch.amp.GradScaler(device=self.device) if config.use_amp else None
 
-        # Historique d'entraînement
+        # Training history
         self.history: Dict[str, List[float]] = {
             "train_loss": [],
             "train_acc": [],
@@ -69,6 +69,16 @@ class Trainer:
             "val_acc": [],
             "epoch": [],
         }
+
+    def _get_device_type(self) -> str:
+        """Extract device type for AMP autocast.
+
+        Returns:
+            Device type string ('cpu' or 'cuda').
+        """
+        if ":" in self.device:
+            return self.device.split(":")[0]
+        return self.device
 
     def _get_lr(self, epoch: int) -> float:
         """Calcule le learning rate avec warmup optionnel.
@@ -111,7 +121,7 @@ class Trainer:
 
             # Forward pass
             if self.config.use_amp and self.scaler is not None:
-                with torch.amp.autocast(device_type=self.device.split(":")[0] if ":" in self.device else self.device):
+                with torch.amp.autocast(device_type=self._get_device_type()):
                     logits = self.model(
                         x_batch,
                         max_steps=self.config.max_steps,
@@ -299,29 +309,29 @@ def train_trlinkos_on_toy_dataset(
     pour entraîner TRLinkosTRM sur un dataset jouet (XOR).
 
     Args:
-        num_epochs: Nombre d'époques d'entraînement.
-        batch_size: Taille des batches.
+        num_epochs: Number of training epochs.
+        batch_size: Batch size.
         lr: Learning rate.
-        device: Device d'entraînement ('cpu' ou 'cuda').
-        seed: Graine aléatoire.
-        verbose: Afficher les logs.
+        device: Training device ('cpu' or 'cuda').
+        seed: Random seed for reproducibility.
+        verbose: Show training logs.
 
     Returns:
-        (model, history): Modèle entraîné et historique d'entraînement.
+        (model, history): Trained model and training history.
 
     Example:
         >>> model, history = train_trlinkos_on_toy_dataset(num_epochs=10)
         >>> print(f"Final accuracy: {history['train_acc'][-1]:.2%}")
     """
-    # Import ici pour éviter les imports circulaires
+    # Import here to avoid circular imports
     from trlinkos_trm_torch import TRLinkosTRMTorch
 
-    # Fixer les graines
+    # Set random seeds
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed(seed)
 
-    # Créer les DataLoaders
+    # Create DataLoaders
     train_loader, val_loader = create_xor_dataloaders(
         n_train=2048,
         n_val=256,

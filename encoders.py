@@ -78,8 +78,10 @@ class TextEncoder(nn.Module):
                     self.word_to_idx[word] = self.next_word_idx
                     self.next_word_idx += 1
                 else:
-                    # Fallback: hash du mot pour vocabulaire plein
-                    self.word_to_idx[word] = hash(word) % self.vocab_size
+                    # Fallback: deterministic hash for vocabulary overflow
+                    import hashlib
+                    word_hash = int(hashlib.md5(word.encode()).hexdigest()[:8], 16)
+                    self.word_to_idx[word] = word_hash % self.vocab_size
             tokens.append(self.word_to_idx[word])
         return tokens if tokens else [self.padding_idx]
 

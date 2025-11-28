@@ -58,7 +58,7 @@ class TrainingConfig:
             # Accept any device string but warn for unusual values
             if not self.device.startswith("cuda:"):
                 import warnings
-                warnings.warn(f"Device inhabituel: {self.device}")
+                warnings.warn(f"Unusual device: {self.device}")
 
     def to_dict(self) -> dict:
         """Convertit la configuration en dictionnaire."""
