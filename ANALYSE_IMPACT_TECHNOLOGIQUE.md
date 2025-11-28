@@ -48,9 +48,9 @@ T-RLINKOS TRM++ (Tiny Recursive Linkos Model ++) est une implémentation innovan
 
 ### Métriques Clés
 
-- **Lignes de code:** ~2500
-- **Dépendances externes:** 1 (NumPy)
-- **Composants principaux:** 26 (classes et fonctions)
+- **Lignes de code:** ~4000 (incluant PyTorch et utilitaires)
+- **Dépendances externes:** NumPy (core), PyTorch (GPU), requests/BeautifulSoup (utilitaires)
+- **Composants principaux:** 40+ (classes et fonctions)
 - **Score de cohérence:** 100% (voir AUDIT_COHERENCE.md)
 
 ---
@@ -64,7 +64,10 @@ T-RLINKOS TRM++ (Tiny Recursive Linkos Model ++) est une implémentation innovan
 │                    T-RLINKOS TRM++                          │
 ├─────────────────────────────────────────────────────────────┤
 │  Python 3.8+                                                │
-│  ├── numpy >= 1.20 (calcul matriciel)                       │
+│  ├── numpy >= 1.20 (calcul matriciel - core)                │
+│  ├── torch (optionnel - accélération GPU)                   │
+│  ├── requests (optionnel - téléchargement données)          │
+│  ├── beautifulsoup4 (optionnel - web scraping)              │
 │  ├── hashlib (standard library - hashing SHA256)            │
 │  ├── dataclasses (standard library - structures de données) │
 │  └── typing (standard library - annotations de type)        │
@@ -75,7 +78,8 @@ T-RLINKOS TRM++ (Tiny Recursive Linkos Model ++) est une implémentation innovan
 
 | Aspect | Évaluation | Impact |
 |--------|------------|--------|
-| **Minimalisme** | ✅ Excellent | Une seule dépendance externe (NumPy) |
+| **Minimalisme (core)** | ✅ Excellent | NumPy seul pour le modèle de base |
+| **Dépendances optionnelles** | ✅ Bon | PyTorch (GPU), requests/bs4 (utilitaires) |
 | **Maturité NumPy** | ✅ Excellent | Bibliothèque stable depuis 20+ ans |
 | **Compatibilité Python** | ✅ Excellent | Python 3.8+ (versions LTS supportées) |
 | **Sécurité** | ✅ Excellent | Aucune vulnérabilité connue dans la pile |
@@ -384,6 +388,43 @@ cosine_similarity_loss(y_pred, y_target) → float
 | **cross_entropy_loss** | Classification | Supporte indices et one-hot |
 | **cosine_similarity_loss** | Embeddings | 1 - cosine_similarity |
 
+### 5.6 Scripts Utilitaires
+
+Le projet inclut des utilitaires pour le téléchargement de données et le web scraping:
+
+#### download_data.py
+
+```python
+from download_data import download_data
+
+# Télécharger un fichier depuis une URL
+download_data("https://example.com/data.csv", "output.csv")
+```
+
+**Fonctionnalités:**
+- Téléchargement HTTP/HTTPS via `requests`
+- Gestion des erreurs réseau
+- Feedback de progression
+
+#### google_scraper.py
+
+```python
+from google_scraper import google_scrape, save_results_to_file
+
+# Effectuer une recherche Google
+results = google_scrape("machine learning", num_results=10)
+
+# Sauvegarder en JSON
+save_results_to_file(results, "results.json")
+```
+
+**Fonctionnalités:**
+- Scraping des résultats de recherche Google
+- Extraction du titre, lien et snippet
+- Interface CLI avec `argparse`
+- Rate limiting (2s) pour éviter le blocage
+- Sortie JSON structurée
+
 ---
 
 ## 6. Impact sur l'Écosystème
@@ -555,16 +596,17 @@ Ce document couvre :
 ```
 ✅ Réalisé                              Phase 2 (Court terme) - En cours
 ├── Pipeline d'entraînement            ├── Portage PyTorch/GPU ✅
-├── Encodeurs texte/image              ├── Optimisation Numba
-├── Fonctions de perte                 ├── Support multi-GPU
-├── forward_recursive_fractal          ├── Intégration HuggingFace
-├── Backtracking fonctionnel           ├── Encodeurs pré-entraînés
-├── Sérialisation modèle ✅            └── Export ONNX
-└── Benchmarks formels ✅
-                                       Phase 3 (Long terme) - En cours
-                                       ├── Version neuromorphique (Intel Loihi, IBM TrueNorth)
-                                       ├── Intégration avec LLMs (CoT augmenté) ✅
-                                       │   └── Module trlinkos_llm_layer.py
+├── Encodeurs texte/image              │   └── trlinkos_trm_torch.py
+├── Fonctions de perte                 ├── Script XOR training ✅
+├── forward_recursive_fractal          │   └── train_trlinkos_xor.py
+├── Backtracking fonctionnel           ├── Optimisation Numba
+├── Sérialisation modèle ✅            ├── Support multi-GPU
+├── Benchmarks formels ✅              ├── Intégration HuggingFace
+├── Utilitaires web ✅                 ├── Encodeurs pré-entraînés
+│   ├── download_data.py               └── Export ONNX
+│   └── google_scraper.py
+└── Intégration LLM ✅                 Phase 3 (Long terme) - En cours
+    └── trlinkos_llm_layer.py          ├── Version neuromorphique (Intel Loihi, IBM TrueNorth)
                                        ├── Applications domain-specific (finance, santé)
                                        └── Certification pour systèmes critiques
 ```
