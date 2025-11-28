@@ -37,11 +37,11 @@ class TestAPIEndpoints:
         return TestClient(app)
 
     def test_health_endpoint(self, client):
-        """Health endpoint should return healthy status."""
+        """Health endpoint should return ok status."""
         response = client.get("/health")
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "healthy"
+        assert data["status"] == "ok"
         assert "trm_config" in data
 
     def test_reason_endpoint_valid_input(self, client):
@@ -59,8 +59,8 @@ class TestAPIEndpoints:
         data = response.json()
         assert "output" in data
         assert len(data["output"]) == DEFAULT_Y_DIM
-        assert "meta" in data
-        assert "num_nodes" in data["meta"]
+        assert "dag_stats" in data
+        assert "num_nodes" in data["dag_stats"]
 
     def test_reason_endpoint_wrong_dimension(self, client):
         """Reason endpoint should reject wrong input dimension."""
@@ -84,8 +84,8 @@ class TestAPIEndpoints:
         )
         assert response.status_code == 200
 
-    def test_reason_endpoint_metadata(self, client):
-        """Reason endpoint should return valid metadata."""
+    def test_reason_endpoint_dag_stats(self, client):
+        """Reason endpoint should return valid DAG statistics."""
         features = np.random.randn(DEFAULT_X_DIM).tolist()
         response = client.post(
             "/reason",
@@ -95,11 +95,11 @@ class TestAPIEndpoints:
             }
         )
         assert response.status_code == 200
-        meta = response.json()["meta"]
-        assert "num_nodes" in meta
-        assert meta["num_nodes"] > 0
-        assert "max_depth" in meta
-        assert "depth_statistics" in meta
+        dag_stats = response.json()["dag_stats"]
+        assert "num_nodes" in dag_stats
+        assert dag_stats["num_nodes"] > 0
+        assert "max_depth" in dag_stats
+        assert "depth_statistics" in dag_stats
 
     def test_docs_endpoint(self, client):
         """Documentation endpoint should be accessible."""
