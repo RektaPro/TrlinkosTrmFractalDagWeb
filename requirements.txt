@@ -9,7 +9,10 @@ fastapi>=0.100.0
 uvicorn>=0.20.0
 
 # PyTorch version (optional, for GPU acceleration)
+# The core NumPy implementation works without PyTorch.
+# Uncomment below for GPU support with trlinkos_trm_torch.py:
 # torch>=2.0.0
 
 # LLM integration (optional)
+# Uncomment for HuggingFace adapter support in trlinkos_llm_layer.py:
 # transformers>=4.30.0

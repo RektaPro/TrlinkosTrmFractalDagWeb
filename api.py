@@ -168,9 +168,11 @@ app = FastAPI(
 )
 
 # CORS middleware for browser access
+# Note: In production, restrict allow_origins to specific trusted domains
+# instead of using "*" which allows requests from any origin.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Configure with specific origins for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
