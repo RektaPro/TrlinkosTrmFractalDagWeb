@@ -2,17 +2,42 @@
 Minimal FastAPI Web API for T-RLINKOS TRM++.
 
 Provides a simple REST API for inference with the recursive reasoning model.
+No authentication, no persistence - just a minimal demonstration.
 
 Endpoints:
+- GET /health: Health check → {"status": "ok", "trm_config": {...}}
 - POST /reason: Run recursive reasoning on input features
-- GET /health: Health check endpoint
 
 Usage:
+    # Start the server
     uvicorn api:app --reload --port 8000
 
-    curl -X POST http://localhost:8000/reason \
-        -H "Content-Type: application/json" \
-        -d '{"features": [0.1, 0.2, 0.3, ...]}'
+    # Or run directly
+    python api.py
+
+Example curl commands:
+    # Health check
+    curl http://localhost:8000/health
+    # Returns: {"status": "ok", "trm_config": {"x_dim": 64, ...}}
+
+    # Run reasoning (requires 64 features by default - see DEFAULT_X_DIM)
+    # Generate 64 random features with Python:
+    #   python -c "import json; import random; print(json.dumps([random.random() for _ in range(64)]))"
+
+    curl -X POST http://localhost:8000/reason \\
+        -H "Content-Type: application/json" \\
+        -d '{"features": [<64 float values>]}'
+
+    # Returns:
+    # {
+    #   "output": [<32 float values>],
+    #   "dag_stats": {"num_nodes": 10, "max_depth": 0, ...}
+    # }
+
+    # With optional parameters
+    curl -X POST http://localhost:8000/reason \\
+        -H "Content-Type: application/json" \\
+        -d '{"features": [<64 floats>], "max_steps": 5, "inner_recursions": 2, "backtrack": true}'
 """
 
 from contextlib import asynccontextmanager
@@ -70,9 +95,9 @@ class ReasoningResponse(BaseModel):
         ...,
         description="Model output vector",
     )
-    meta: Dict[str, Any] = Field(
+    dag_stats: Dict[str, Any] = Field(
         default_factory=dict,
-        description="Metadata about the reasoning process",
+        description="DAG statistics: num_nodes, max_depth, etc.",
     )
 
 
@@ -80,7 +105,7 @@ class HealthResponse(BaseModel):
     """Response model for the /health endpoint."""
 
     status: str = Field(
-        default="healthy",
+        default="ok",
         description="Health status",
     )
     trm_config: Dict[str, int] = Field(
@@ -181,9 +206,17 @@ app.add_middleware(
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check() -> HealthResponse:
-    """Health check endpoint."""
+    """Health check endpoint.
+
+    Returns:
+        HealthResponse: Status and configuration info.
+
+    Example:
+        curl http://localhost:8000/health
+        # Returns: {"status": "ok", "trm_config": {...}}
+    """
     return HealthResponse(
-        status="healthy" if app_state.model is not None else "unhealthy",
+        status="ok" if app_state.model is not None else "error",
         trm_config=app_state.config,
     )
 
@@ -195,7 +228,34 @@ async def reason(request: ReasoningRequest) -> ReasoningResponse:
 
     The model processes the input through multiple reasoning steps,
     using dCaAP-inspired neurons and Torque Clustering routing.
-    Returns the output along with metadata about the reasoning process.
+    Returns the output along with DAG statistics about the reasoning process.
+
+    Args:
+        request: ReasoningRequest with features and optional parameters.
+            - features: List of floats (length must match x_dim, default 64)
+            - max_steps: Maximum reasoning steps (default 10)
+            - inner_recursions: Inner recursions per step (default 3)
+            - backtrack: Enable backtracking to best states (default false)
+
+    Returns:
+        ReasoningResponse: Model output and DAG statistics.
+
+    Example:
+        curl -X POST http://localhost:8000/reason \\
+            -H "Content-Type: application/json" \\
+            -d '{"features": [<64 float values>], "max_steps": 10}'
+
+        # Returns:
+        # {
+        #   "output": [<32 float values>],
+        #   "dag_stats": {
+        #     "num_nodes": 10,
+        #     "max_depth": 0,
+        #     "depth_statistics": {"0": 10},
+        #     "best_node_step": 9,
+        #     "best_node_score": null
+        #   }
+        # }
     """
     if app_state.model is None:
         raise HTTPException(status_code=503, detail="Model not initialized")
@@ -222,11 +282,11 @@ async def reason(request: ReasoningRequest) -> ReasoningResponse:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Reasoning error: {str(e)}")
 
-    # Get metadata from DAG
+    # Get DAG statistics
     best_node = dag.get_best_node()
     depth_stats = dag.get_depth_statistics()
 
-    meta = {
+    dag_stats = {
         "num_nodes": len(dag.nodes),
         "max_depth": max(depth_stats.keys()) if depth_stats else 0,
         "depth_statistics": depth_stats,
@@ -236,7 +296,7 @@ async def reason(request: ReasoningRequest) -> ReasoningResponse:
 
     return ReasoningResponse(
         output=y_pred[0].tolist(),
-        meta=meta,
+        dag_stats=dag_stats,
     )
 
 
