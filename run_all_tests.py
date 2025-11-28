@@ -7,12 +7,10 @@ This script runs all tests for the entire system:
 2. LLM Reasoning Layer (trlinkos_llm_layer.py)
 3. PyTorch Implementation (trlinkos_trm_torch.py) - if torch is available
 4. XOR Training (train_trlinkos_xor.py) - if torch is available
-5. Utility scripts (download_data.py, google_scraper.py)
 
 Usage:
     python run_all_tests.py
     python run_all_tests.py --skip-pytorch  # Skip PyTorch tests
-    python run_all_tests.py --verbose       # Verbose output
 """
 
 import subprocess
@@ -352,7 +350,6 @@ def main():
     
     parser = argparse.ArgumentParser(description="Run all T-RLINKOS TRM++ tests")
     parser.add_argument("--skip-pytorch", action="store_true", help="Skip PyTorch tests")
-    parser.add_argument("--verbose", action="store_true", help="Verbose output")
     args = parser.parse_args()
     
     print("=" * 70)
