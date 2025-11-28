@@ -20,27 +20,24 @@ Example curl commands:
     curl http://localhost:8000/health
     # Returns: {"status": "ok", "trm_config": {"x_dim": 64, ...}}
 
-    # Run reasoning (64 features required by default)
+    # Run reasoning (requires 64 features by default - see DEFAULT_X_DIM)
+    # Generate 64 random features with Python:
+    #   python -c "import json; import random; print(json.dumps([random.random() for _ in range(64)]))"
+
     curl -X POST http://localhost:8000/reason \\
         -H "Content-Type: application/json" \\
-        -d '{"features": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
-                         0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
-                         0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
-                         0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
-                         0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
-                         0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
-                         0.1, 0.2, 0.3, 0.4]}'
+        -d '{"features": [<64 float values>]}'
 
     # Returns:
     # {
-    #   "output": [0.123, 0.456, ...],
+    #   "output": [<32 float values>],
     #   "dag_stats": {"num_nodes": 10, "max_depth": 0, ...}
     # }
 
     # With optional parameters
     curl -X POST http://localhost:8000/reason \\
         -H "Content-Type: application/json" \\
-        -d '{"features": [...], "max_steps": 5, "inner_recursions": 2, "backtrack": true}'
+        -d '{"features": [<64 floats>], "max_steps": 5, "inner_recursions": 2, "backtrack": true}'
 """
 
 from contextlib import asynccontextmanager
@@ -235,6 +232,10 @@ async def reason(request: ReasoningRequest) -> ReasoningResponse:
 
     Args:
         request: ReasoningRequest with features and optional parameters.
+            - features: List of floats (length must match x_dim, default 64)
+            - max_steps: Maximum reasoning steps (default 10)
+            - inner_recursions: Inner recursions per step (default 3)
+            - backtrack: Enable backtracking to best states (default false)
 
     Returns:
         ReasoningResponse: Model output and DAG statistics.
@@ -242,11 +243,11 @@ async def reason(request: ReasoningRequest) -> ReasoningResponse:
     Example:
         curl -X POST http://localhost:8000/reason \\
             -H "Content-Type: application/json" \\
-            -d '{"features": [0.1, 0.2, ..., 0.64], "max_steps": 10}'
+            -d '{"features": [<64 float values>], "max_steps": 10}'
 
         # Returns:
         # {
-        #   "output": [0.123, 0.456, ...],
+        #   "output": [<32 float values>],
         #   "dag_stats": {
         #     "num_nodes": 10,
         #     "max_depth": 0,
