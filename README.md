@@ -92,7 +92,48 @@ cd TrlinkosTrmFractalDag
 
 # Install dependencies
 pip install numpy
+
+# For PyTorch version (GPU support)
+pip install torch
+
+# For web scraping utilities
+pip install requests beautifulsoup4
 ```
+
+## 📁 Project Structure
+
+```
+TrlinkosTrmFractalDagWeb/
+├── t_rlinkos_trm_fractal_dag.py   # Core NumPy implementation
+├── trlinkos_trm_torch.py          # PyTorch GPU implementation
+├── trlinkos_llm_layer.py          # LLM reasoning layer integration
+├── train_trlinkos_xor.py          # XOR training example (PyTorch)
+├── download_data.py               # Data download utility
+├── google_scraper.py              # Google search scraper
+├── google_homepage.html           # Sample downloaded HTML data
+├── ai_results.json                # AI results data file
+├── README.md                      # This documentation
+├── AUDIT_COHERENCE.md             # Coherence analysis (French)
+├── ANALYSE_IMPACT_TECHNOLOGIQUE.md    # Tech impact analysis (French)
+├── ANALYSE_IMPACT_CONNEXION_INTERNET.md # Internet connectivity analysis (French)
+└── LICENSE                        # BSD 3-Clause License
+```
+
+### Core Files
+
+| File | Description | Dependencies |
+|------|-------------|--------------|
+| `t_rlinkos_trm_fractal_dag.py` | Pure NumPy recursive reasoning model | NumPy |
+| `trlinkos_trm_torch.py` | PyTorch version with GPU support | PyTorch |
+| `trlinkos_llm_layer.py` | LLM integration layer | NumPy, t_rlinkos_trm_fractal_dag |
+| `train_trlinkos_xor.py` | XOR training script | PyTorch, trlinkos_trm_torch |
+
+### Utility Files
+
+| File | Description | Dependencies |
+|------|-------------|--------------|
+| `download_data.py` | HTTP/HTTPS file downloader | requests |
+| `google_scraper.py` | Google search result scraper | requests, beautifulsoup4 |
 
 ## 🚀 Quick Start
 
@@ -667,6 +708,8 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 | **LLM Reasoning Layer** | ✅ Complete |
 | **LLM Adapters (Mistral, LLaMA)** | ✅ Complete |
 | **Chain-of-Thought Augmenter** | ✅ Complete |
+| **PyTorch TRM Implementation** | ✅ Complete |
+| **XOR Training Script** | ✅ Complete |
 
 ## 🗺️ Roadmap
 
@@ -681,11 +724,12 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 | Model Serialization | ✅ Done | `save_model()` and `load_model()` functions |
 | Formal Benchmarks | ✅ Done | `benchmark_forward_recursive()`, `run_benchmark_suite()` |
 
-### Phase 2 (Medium term) - Planned
+### Phase 2 (Medium term) - In Progress
 
 | Feature | Status | Description |
 |---------|--------|-------------|
-| PyTorch/GPU Porting | 🔲 Planned | GPU acceleration via PyTorch |
+| PyTorch/GPU Porting | ✅ Done | GPU acceleration via PyTorch (`trlinkos_trm_torch.py`) |
+| XOR Training Example | ✅ Done | Training script for XOR problem (`train_trlinkos_xor.py`) |
 | Numba Optimization | 🔲 Planned | JIT compilation for NumPy operations |
 | Multi-GPU Support | 🔲 Planned | Distributed training and inference |
 | HuggingFace Integration | 🔲 Planned | Integration with transformers ecosystem |
@@ -840,6 +884,119 @@ The reasoning layer supports any LLM that provides hidden states:
 | GPT-2 | gpt2, gpt2-medium, gpt2-large, gpt2-xl | 768-1600 |
 | BERT | bert-base, bert-large | 768, 1024 |
 | Any HuggingFace | Via HuggingFaceAdapter | Auto-detected |
+
+### PyTorch Implementation
+
+The project includes a full PyTorch implementation for GPU acceleration (`trlinkos_trm_torch.py`):
+
+```python
+import torch
+from trlinkos_trm_torch import TRLinkosTRMTorch
+
+# Create PyTorch model (GPU-accelerated)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model = TRLinkosTRMTorch(
+    x_dim=2,        # Input dimension
+    y_dim=1,        # Output dimension
+    z_dim=8,        # Internal state dimension
+    hidden_dim=32,  # Hidden layer size
+    num_experts=4,  # Number of dCaAP experts
+    num_branches=4, # Number of dendritic branches
+).to(device)
+
+# Forward pass
+x = torch.randn(32, 2).to(device)
+y_pred = model(x, max_steps=6, inner_recursions=2)
+```
+
+#### Key PyTorch Components
+
+| Component | Description |
+|-----------|-------------|
+| `LinearTorch` | PyTorch linear layer wrapper |
+| `DCaAPCellTorch` | PyTorch implementation of dCaAP neuron |
+| `TorqueRouterTorch` | PyTorch Torque Clustering router |
+| `TRLinkosCoreTorch` | PyTorch core with MoE architecture |
+| `TRLinkosTRMTorch` | Full PyTorch model for end-to-end training |
+
+### XOR Training Example
+
+Train the model on the XOR problem (`train_trlinkos_xor.py`):
+
+```bash
+# Run XOR training
+python train_trlinkos_xor.py
+```
+
+The training script demonstrates:
+- Mixed precision training with `autocast` and `GradScaler`
+- XOR dataset generation
+- Training loop with accuracy tracking
+- Model evaluation on test samples
+
+```python
+# Expected output after training:
+# Epoch 050 | Loss=0.0123 | Acc=1.0000
+# X test:
+#  [[0. 0.]
+#   [0. 1.]
+#   [1. 0.]
+#   [1. 1.]]
+# Preds:
+#  [[0.]
+#   [1.]
+#   [1.]
+#   [0.]]
+```
+
+### Utility Scripts
+
+#### Data Download (`download_data.py`)
+
+Utility for downloading data from URLs:
+
+```python
+from download_data import download_data
+
+# Download a file from URL
+download_data("https://example.com/data.csv", "local_data.csv")
+```
+
+**Features:**
+- HTTP/HTTPS download support via `requests`
+- Error handling for network issues
+- Progress feedback
+
+#### Google Scraper (`google_scraper.py`)
+
+Web scraper for Google search results:
+
+```bash
+# Command line usage
+python google_scraper.py "search query" --num_results 10 --output results.json
+```
+
+```python
+# Programmatic usage
+from google_scraper import google_scrape, save_results_to_file
+
+# Perform search
+results = google_scrape("machine learning", num_results=10)
+
+# Save results to JSON
+save_results_to_file(results, "search_results.json")
+
+# Each result contains:
+# - title: Page title
+# - link: URL
+# - snippet: Description excerpt
+```
+
+**Features:**
+- Real-time Google search scraping
+- Configurable number of results
+- JSON output format
+- Rate limiting (2s delay) to avoid blocking
 
 ## 📚 Documentation
 
