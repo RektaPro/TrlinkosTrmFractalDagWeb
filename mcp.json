@@ -1,0 +1,360 @@
+{
+  "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/specification/main/schema/mcp-manifest.json",
+  "name": "trlinkos-trm-mcp",
+  "version": "1.0.0",
+  "description": "Model Context Protocol server for T-RLINKOS TRM++ Fractal Merkle-DAG - A recursive reasoning architecture with dCaAP neurons, Torque Clustering routing, and cryptographic audit trails",
+  "author": "RektaPro",
+  "license": "BSD-3-Clause",
+  "repository": "https://github.com/RektaPro/TrlinkosTrmFractalDagWeb",
+  "homepage": "https://github.com/RektaPro/TrlinkosTrmFractalDagWeb",
+  "keywords": [
+    "mcp",
+    "trlinkos",
+    "trm",
+    "recursive-reasoning",
+    "merkle-dag",
+    "fractal",
+    "dcaap",
+    "neural-network",
+    "llm-integration"
+  ],
+  "protocol_version": "2024-11-05",
+  "server": {
+    "command": "python",
+    "args": ["mcp/server.py"],
+    "env": {}
+  },
+  "capabilities": {
+    "tools": true,
+    "resources": true,
+    "prompts": false,
+    "logging": true
+  },
+  "tools": [
+    {
+      "name": "reason_step",
+      "description": "Execute a single reasoning step with TRLinkosTRM. Returns y_pred and z_state for the given input.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "array",
+            "items": {"type": "number"},
+            "description": "Input feature vector"
+          },
+          "y": {
+            "type": "array",
+            "items": {"type": "number"},
+            "description": "Current response state (optional, defaults to zeros)"
+          },
+          "z": {
+            "type": "array",
+            "items": {"type": "number"},
+            "description": "Current internal state (optional, defaults to zeros)"
+          },
+          "inner_recursions": {
+            "type": "integer",
+            "default": 3,
+            "description": "Number of inner recursions"
+          }
+        },
+        "required": ["x"]
+      }
+    },
+    {
+      "name": "run_trm_recursive",
+      "description": "Run complete recursive reasoning loop with TRLinkosTRM. Executes multiple reasoning steps and returns the final prediction with DAG statistics.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "array",
+            "items": {"type": "number"},
+            "description": "Input feature vector"
+          },
+          "max_steps": {
+            "type": "integer",
+            "default": 10,
+            "description": "Maximum number of reasoning steps"
+          },
+          "inner_recursions": {
+            "type": "integer",
+            "default": 3,
+            "description": "Number of inner recursions per step"
+          },
+          "backtrack": {
+            "type": "boolean",
+            "default": false,
+            "description": "Enable backtracking to best states"
+          },
+          "fractal_branching": {
+            "type": "boolean",
+            "default": false,
+            "description": "Enable fractal exploration"
+          }
+        },
+        "required": ["x"]
+      }
+    },
+    {
+      "name": "dag_add_node",
+      "description": "Add a reasoning step node to the Fractal Merkle-DAG.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "dag_id": {
+            "type": "string",
+            "description": "DAG identifier"
+          },
+          "step": {
+            "type": "integer",
+            "description": "Step number"
+          },
+          "y": {
+            "type": "array",
+            "items": {"type": "number"},
+            "description": "Response state"
+          },
+          "z": {
+            "type": "array",
+            "items": {"type": "number"},
+            "description": "Internal state"
+          },
+          "parents": {
+            "type": "array",
+            "items": {"type": "string"},
+            "default": [],
+            "description": "Parent node IDs"
+          },
+          "score": {
+            "type": "number",
+            "description": "Optional score for the node"
+          }
+        },
+        "required": ["dag_id", "step", "y", "z"]
+      }
+    },
+    {
+      "name": "dag_best_path",
+      "description": "Get the best reasoning path from root to the highest-scoring node in the DAG.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "dag_id": {
+            "type": "string",
+            "description": "DAG identifier"
+          }
+        },
+        "required": ["dag_id"]
+      }
+    },
+    {
+      "name": "dag_get_state",
+      "description": "Get the current state of a Fractal Merkle-DAG including statistics and best node.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "dag_id": {
+            "type": "string",
+            "description": "DAG identifier"
+          }
+        },
+        "required": ["dag_id"]
+      }
+    },
+    {
+      "name": "torque_route",
+      "description": "Compute expert routing weights using Torque Clustering algorithm.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "array",
+            "items": {"type": "number"},
+            "description": "Input features"
+          },
+          "y": {
+            "type": "array",
+            "items": {"type": "number"},
+            "description": "Current response"
+          },
+          "z": {
+            "type": "array",
+            "items": {"type": "number"},
+            "description": "Internal state"
+          }
+        },
+        "required": ["x", "y", "z"]
+      }
+    },
+    {
+      "name": "dcaap_forward",
+      "description": "Execute forward pass through a dCaAP (dendritic Calcium Action Potential) cell.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "array",
+            "items": {"type": "number"},
+            "description": "External input"
+          },
+          "y": {
+            "type": "array",
+            "items": {"type": "number"},
+            "description": "Current response"
+          },
+          "z": {
+            "type": "array",
+            "items": {"type": "number"},
+            "description": "Internal state"
+          }
+        },
+        "required": ["x", "y", "z"]
+      }
+    },
+    {
+      "name": "fractal_branch",
+      "description": "Create a fractal branch in the reasoning DAG for alternative exploration.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "dag_id": {
+            "type": "string",
+            "description": "DAG identifier"
+          },
+          "parent_node_id": {
+            "type": "string",
+            "description": "Parent node to branch from"
+          },
+          "y": {
+            "type": "array",
+            "items": {"type": "number"},
+            "description": "Initial y state for branch"
+          },
+          "z": {
+            "type": "array",
+            "items": {"type": "number"},
+            "description": "Initial z state for branch"
+          },
+          "score": {
+            "type": "number",
+            "description": "Optional score for the branch"
+          }
+        },
+        "required": ["dag_id", "parent_node_id", "y", "z"]
+      }
+    },
+    {
+      "name": "evaluate_score",
+      "description": "Evaluate a prediction score using MSE, cosine similarity, or custom scoring.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "y_pred": {
+            "type": "array",
+            "items": {"type": "number"},
+            "description": "Predicted values"
+          },
+          "y_target": {
+            "type": "array",
+            "items": {"type": "number"},
+            "description": "Target values"
+          },
+          "metric": {
+            "type": "string",
+            "enum": ["mse", "cosine", "mae"],
+            "default": "mse",
+            "description": "Scoring metric"
+          }
+        },
+        "required": ["y_pred", "y_target"]
+      }
+    },
+    {
+      "name": "load_model",
+      "description": "Load a saved TRLinkosTRM model from disk.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "filepath": {
+            "type": "string",
+            "description": "Path to the saved model file (.npz)"
+          }
+        },
+        "required": ["filepath"]
+      }
+    },
+    {
+      "name": "save_model",
+      "description": "Save the current TRLinkosTRM model to disk.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "filepath": {
+            "type": "string",
+            "description": "Path to save the model (.npz)"
+          }
+        },
+        "required": ["filepath"]
+      }
+    },
+    {
+      "name": "get_repo_state",
+      "description": "Get the state of files in the repository. Returns file contents or directory listing.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to file or directory relative to repo root"
+          }
+        },
+        "required": ["path"]
+      }
+    },
+    {
+      "name": "write_repo_state",
+      "description": "Write content to a file in the repository.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to file relative to repo root"
+          },
+          "content": {
+            "type": "string",
+            "description": "Content to write"
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["overwrite", "append"],
+            "default": "overwrite",
+            "description": "Write mode"
+          }
+        },
+        "required": ["path", "content"]
+      }
+    }
+  ],
+  "resources": [
+    {
+      "uri": "trlinkos://model/config",
+      "name": "Model Configuration",
+      "description": "Current TRLinkosTRM model configuration",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "trlinkos://dag/{dag_id}",
+      "name": "DAG State",
+      "description": "State of a specific Fractal Merkle-DAG",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "trlinkos://benchmark/results",
+      "name": "Benchmark Results",
+      "description": "Latest benchmark results",
+      "mimeType": "application/json"
+    }
+  ]
+}
