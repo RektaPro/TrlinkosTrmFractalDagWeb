@@ -108,6 +108,7 @@ TrlinkosTrmFractalDagWeb/
 ├── trlinkos_trm_torch.py          # PyTorch GPU implementation
 ├── trlinkos_llm_layer.py          # LLM reasoning layer integration
 ├── train_trlinkos_xor.py          # XOR training example (PyTorch)
+├── run_all_tests.py               # Complete system test runner
 ├── download_data.py               # Data download utility
 ├── google_scraper.py              # Google search scraper
 ├── google_homepage.html           # Sample downloaded HTML data
@@ -127,6 +128,7 @@ TrlinkosTrmFractalDagWeb/
 | `trlinkos_trm_torch.py` | PyTorch version with GPU support | PyTorch |
 | `trlinkos_llm_layer.py` | LLM integration layer | NumPy, t_rlinkos_trm_fractal_dag |
 | `train_trlinkos_xor.py` | XOR training script | PyTorch, trlinkos_trm_torch |
+| `run_all_tests.py` | Complete system test runner | NumPy, (optional) PyTorch |
 
 ### Utility Files
 
@@ -643,15 +645,53 @@ ChainOfThoughtAugmenter(reasoning_layer, adapter=None)
 
 ## 🧪 Running Tests
 
+### Complete System Test
+
+Run all tests with the comprehensive test runner:
+
+```bash
+# Run complete system test (NumPy + LLM Layer + PyTorch)
+python run_all_tests.py
+
+# Skip PyTorch tests (if torch is not installed)
+python run_all_tests.py --skip-pytorch
+```
+
+Expected output:
+```
+======================================================================
+T-RLINKOS TRM++ FRACTAL DAG - COMPLETE SYSTEM TEST
+======================================================================
+...
+======================================================================
+TEST SUMMARY
+======================================================================
+✅ PASS | Core NumPy Implementation Tests (30.20s)
+✅ PASS | LLM Reasoning Layer Tests (0.86s)
+✅ PASS | PyTorch TRM Implementation Tests (0.02s)
+✅ PASS | Quick XOR Training Test (1.71s)
+----------------------------------------------------------------------
+Total: 4 tests | Passed: 4 | Failed: 0
+Duration: 32.79s
+======================================================================
+
+🎉 ALL TESTS PASSED! 🎉
+```
+
+### Individual Module Tests
+
 ```bash
 # Run the built-in tests
 python t_rlinkos_trm_fractal_dag.py
 
 # Run the LLM reasoning layer tests
 python trlinkos_llm_layer.py
+
+# Run XOR training (requires PyTorch)
+python train_trlinkos_xor.py
 ```
 
-Expected output:
+Expected output for NumPy tests:
 ```
 [Test 1] y_pred shape: (8, 32)
 [Test 1] Nombre de noeuds dans le DAG: 80
