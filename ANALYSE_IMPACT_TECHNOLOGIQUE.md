@@ -53,6 +53,33 @@ T-RLINKOS TRM++ (Tiny Recursive Linkos Model ++) est une implémentation innovan
 - **Composants principaux:** 40+ (classes et fonctions)
 - **Score de cohérence:** 100% (voir AUDIT_COHERENCE.md)
 
+### 🟢 État d'Implémentation (Mise à jour 2025-11-28)
+
+> **Ce qui est effectivement implémenté dans ce dépôt:**
+
+| Composant | Fichier | Status |
+|-----------|---------|--------|
+| **Core NumPy** (`TRLinkosTRM`, `DCaAPCell`, `TorqueRouter`, `FractalMerkleDAG`) | `t_rlinkos_trm_fractal_dag.py` | ✅ **Implémenté et testé** |
+| **Encodeurs** (`TextEncoder`, `ImageEncoder`) | `t_rlinkos_trm_fractal_dag.py` | ✅ **Implémenté et testé** |
+| **Pipeline d'entraînement** (`Trainer`, `Dataset`, `DataLoader`) | `t_rlinkos_trm_fractal_dag.py` | ✅ **Implémenté et testé** |
+| **Fonctions de perte** (`mse_loss`, `cross_entropy_loss`, `cosine_similarity_loss`) | `t_rlinkos_trm_fractal_dag.py` | ✅ **Implémenté et testé** |
+| **Sérialisation** (`save_model`, `load_model`) | `t_rlinkos_trm_fractal_dag.py` | ✅ **Implémenté et testé** |
+| **Benchmarks** (`benchmark_forward_recursive`, `run_benchmark_suite`) | `t_rlinkos_trm_fractal_dag.py` | ✅ **Implémenté et testé** |
+| **Layer LLM** (`TRLinkOSReasoningLayer`, adapters) | `trlinkos_llm_layer.py` | ✅ **Implémenté et testé** |
+| **Version PyTorch** (`TRLinkosTRMTorch`) | `trlinkos_trm_torch.py` | ✅ **Implémenté** |
+| **Script XOR** | `train_trlinkos_xor.py` | ✅ **Implémenté** |
+| **Utilitaires web** (`download_data`, `google_scraper`) | `download_data.py`, `google_scraper.py` | ✅ **Implémenté** |
+
+> **Ce qui reste expérimental / théorique (Roadmap):**
+
+| Fonctionnalité | Status | Notes |
+|----------------|--------|-------|
+| Optimisation Numba | 🔲 Planifié | JIT compilation pour améliorer la performance |
+| Support multi-GPU | 🔲 Planifié | Entraînement distribué |
+| Intégration HuggingFace native | 🔲 Planifié | Encodeurs pré-entraînés (BERT, ViT) |
+| Export ONNX | 🔲 Planifié | Déploiement en production |
+| Version neuromorphique | 🔲 Recherche | Intel Loihi, IBM TrueNorth |
+
 ---
 
 ## 2. Analyse de la Pile Technologique
