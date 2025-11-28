@@ -78,7 +78,8 @@ T-RLINKOS TRM++ (Tiny Recursive Linkos Model ++) est une implémentation innovan
 
 | Aspect | Évaluation | Impact |
 |--------|------------|--------|
-| **Minimalisme** | ✅ Excellent | Une seule dépendance externe (NumPy) |
+| **Minimalisme (core)** | ✅ Excellent | NumPy seul pour le modèle de base |
+| **Dépendances optionnelles** | ✅ Bon | PyTorch (GPU), requests/bs4 (utilitaires) |
 | **Maturité NumPy** | ✅ Excellent | Bibliothèque stable depuis 20+ ans |
 | **Compatibilité Python** | ✅ Excellent | Python 3.8+ (versions LTS supportées) |
 | **Sécurité** | ✅ Excellent | Aucune vulnérabilité connue dans la pile |
