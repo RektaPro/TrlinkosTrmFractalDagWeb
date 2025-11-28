@@ -140,6 +140,29 @@ class TestReasonOverCandidates:
         assert scores.shape == (1,)
         assert best_idx == 0
 
+    def test_combination_strategies(self):
+        """Should support different combination strategies."""
+        query = np.random.randn(128)
+        candidates = np.random.randn(3, 128)
+
+        # Test average strategy (default)
+        scores_avg, _ = reason_over_candidates(
+            query, candidates, reasoning_steps=2, combination_strategy="average"
+        )
+        assert scores_avg.shape == (3,)
+
+        # Test weighted strategy
+        scores_weighted, _ = reason_over_candidates(
+            query, candidates, reasoning_steps=2, combination_strategy="weighted"
+        )
+        assert scores_weighted.shape == (3,)
+
+        # Test concat strategy
+        scores_concat, _ = reason_over_candidates(
+            query, candidates, reasoning_steps=2, combination_strategy="concat"
+        )
+        assert scores_concat.shape == (3,)
+
     def test_custom_reasoning_layer(self):
         """Should accept custom reasoning layer."""
         config = ReasoningConfig(

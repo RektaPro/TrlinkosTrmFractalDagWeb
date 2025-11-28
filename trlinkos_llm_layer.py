@@ -32,6 +32,7 @@ References:
 - L-InCOT integration: https://github.com/RektaPro/L-inCOTv0.1
 """
 
+import hashlib
 import numpy as np
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -1023,22 +1024,24 @@ def encode_text(
         >>> # Use with TRLinkosTRM reasoning
         >>> output, dag = reasoning_layer.reason(embedding.reshape(1, -1))
     """
-    import hashlib
-
     # If an external encoder is provided, use it
     if encoder is not None:
         if hasattr(encoder, "encode"):
             result = encoder.encode(text)
             if isinstance(result, np.ndarray):
-                return result.flatten()[:embedding_dim] if len(result.flatten()) > embedding_dim else np.pad(
-                    result.flatten(), (0, max(0, embedding_dim - len(result.flatten())))
-                )
+                flat_result = result.flatten()
+                # Truncate or pad to target dimension
+                if len(flat_result) > embedding_dim:
+                    return flat_result[:embedding_dim]
+                elif len(flat_result) < embedding_dim:
+                    pad_width = embedding_dim - len(flat_result)
+                    return np.pad(flat_result, (0, pad_width))
+                return flat_result
             return np.array(result).flatten()
 
     # Stub implementation: deterministic hash-based embedding
     # This creates reproducible embeddings based on text content
     text_bytes = text.encode("utf-8")
-    hash_digest = hashlib.sha512(text_bytes).digest()
 
     # Expand hash to embedding_dim using repeated hashing
     embedding_parts = []
@@ -1065,6 +1068,7 @@ def reason_over_candidates(
     reasoning_layer: Optional["TRLinkOSReasoningLayer"] = None,
     reasoning_steps: int = 4,
     return_all_scores: bool = False,
+    combination_strategy: str = "average",
 ) -> Tuple[np.ndarray, int]:
     """Score and rank candidates using TRLinkosTRM reasoning.
 
@@ -1125,6 +1129,11 @@ def reason_over_candidates(
                          a default layer configured for the embedding dimension.
         reasoning_steps: Number of reasoning steps per candidate (default: 4).
         return_all_scores: If True, returns detailed per-step scores.
+        combination_strategy: How to combine query and candidate embeddings.
+                              Options: "average" (default), "concat", "weighted".
+                              - "average": Element-wise mean of query and candidate.
+                              - "concat": Concatenate query and candidate (doubles dim).
+                              - "weighted": 0.7 * query + 0.3 * candidate.
 
     Returns:
         Tuple of:
@@ -1149,13 +1158,19 @@ def reason_over_candidates(
 
     num_candidates, embedding_dim = candidate_embeddings.shape
 
+    # Determine input dimension based on combination strategy
+    if combination_strategy == "concat":
+        input_dim = embedding_dim * 2
+    else:
+        input_dim = embedding_dim
+
     # Create reasoning layer if not provided
     if reasoning_layer is None:
         config = ReasoningConfig(
-            input_dim=embedding_dim,
-            output_dim=min(embedding_dim // 4, 256),
-            z_dim=min(embedding_dim // 8, 128),
-            hidden_dim=min(embedding_dim // 4, 256),
+            input_dim=input_dim,
+            output_dim=min(input_dim // 4, 256),
+            z_dim=min(input_dim // 8, 128),
+            hidden_dim=min(input_dim // 4, 256),
             num_experts=4,
             max_reasoning_steps=reasoning_steps,
             project_to_llm_dim=True,  # Project back for comparison
@@ -1166,16 +1181,33 @@ def reason_over_candidates(
     scores = np.zeros(num_candidates)
 
     for i in range(num_candidates):
-        # Combine query and candidate (concatenate or average)
-        combined = (query_embedding + candidate_embeddings[i:i+1]) / 2.0
+        # Combine query and candidate using specified strategy
+        candidate = candidate_embeddings[i:i+1]
+        if combination_strategy == "average":
+            combined = (query_embedding + candidate) / 2.0
+        elif combination_strategy == "concat":
+            combined = np.concatenate([query_embedding, candidate], axis=-1)
+        elif combination_strategy == "weighted":
+            combined = 0.7 * query_embedding + 0.3 * candidate
+        else:
+            # Default to average for unknown strategies
+            combined = (query_embedding + candidate) / 2.0
 
         # Run reasoning
         reasoned_output, dag = reasoning_layer.reason(combined)
 
         # Score based on similarity between reasoned output and query
         # Higher score = better reasoning alignment
+        # For concat strategy, we need to extract the query portion of the output
+        if combination_strategy == "concat":
+            # When using concat, the output is 2x the original dim
+            # Take the first half which corresponds to the query portion
+            output_for_comparison = reasoned_output[:, :embedding_dim]
+        else:
+            output_for_comparison = reasoned_output
+
         query_norm = query_embedding / (np.linalg.norm(query_embedding) + 1e-10)
-        output_norm = reasoned_output / (np.linalg.norm(reasoned_output) + 1e-10)
+        output_norm = output_for_comparison / (np.linalg.norm(output_for_comparison) + 1e-10)
         similarity = np.sum(query_norm * output_norm)
 
         # Also consider DAG quality (more nodes explored = more thorough)
