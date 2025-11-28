@@ -191,6 +191,10 @@ class TestTRLinkosTRM:
         call_count = [0]
         best_scores = [float('-inf')] * 2
         
+        # Constants for score decay simulation
+        DECAY_START_STEP = 3  # Step after which scores start decaying
+        DECAY_PENALTY_FACTOR = 0.5  # Penalty per step after decay starts
+        
         def scorer_with_decay(x_in, y_pred):
             call_count[0] += 1
             # Base score is negative MSE
@@ -198,8 +202,8 @@ class TestTRLinkosTRM:
             
             # Simulate score decay (scores get worse over time)
             # Add a penalty that increases with call count to force backtracking
-            if call_count[0] > 3:
-                penalty = (call_count[0] - 3) * 0.5
+            if call_count[0] > DECAY_START_STEP:
+                penalty = (call_count[0] - DECAY_START_STEP) * DECAY_PENALTY_FACTOR
                 scores = base_scores - penalty
             else:
                 scores = base_scores
