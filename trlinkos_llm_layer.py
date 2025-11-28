@@ -924,6 +924,432 @@ def create_reasoning_layer_for_llm(
 
 
 # ============================
+#  Simple Interface Functions (Stubs)
+# ============================
+
+# The following functions provide a simple, clear API for integrating
+# TRLinkosTRM as a reasoning layer with any LLM. These are designed as
+# "stubs" that work with numpy arrays directly, with documentation on
+# how to connect them to real LLMs.
+
+
+def encode_text(
+    text: str,
+    embedding_dim: int = 768,
+    encoder: Optional[Any] = None,
+) -> np.ndarray:
+    """Encode text into a vector embedding.
+
+    This function converts raw text into a dense vector representation
+    suitable for TRLinkosTRM reasoning. It serves as a stub that can be
+    connected to any LLM embedding model.
+
+    **Stub Behavior (without external LLM):**
+    - Uses a simple hash-based encoding that produces deterministic
+      embeddings based on text content.
+    - Suitable for testing and prototyping.
+
+    **How to connect a real LLM:**
+
+    1. **OpenAI Embeddings:**
+       ```python
+       import openai
+       from openai import OpenAI
+
+       client = OpenAI(api_key="your-api-key")
+
+       def encode_text_openai(text: str) -> np.ndarray:
+           response = client.embeddings.create(
+               input=text,
+               model="text-embedding-3-small"  # or "text-embedding-ada-002"
+           )
+           return np.array(response.data[0].embedding)
+       ```
+
+    2. **HuggingFace Sentence Transformers:**
+       ```python
+       from sentence_transformers import SentenceTransformer
+
+       model = SentenceTransformer('all-MiniLM-L6-v2')
+
+       def encode_text_hf(text: str) -> np.ndarray:
+           return model.encode(text)
+       ```
+
+    3. **Mistral AI Embeddings:**
+       ```python
+       from mistralai.client import MistralClient
+
+       client = MistralClient(api_key="your-api-key")
+
+       def encode_text_mistral(text: str) -> np.ndarray:
+           response = client.embeddings(
+               model="mistral-embed",
+               input=[text]
+           )
+           return np.array(response.data[0].embedding)
+       ```
+
+    4. **Custom HuggingFace Model:**
+       ```python
+       from transformers import AutoTokenizer, AutoModel
+       import torch
+
+       tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+       model = AutoModel.from_pretrained("bert-base-uncased")
+
+       def encode_text_custom(text: str) -> np.ndarray:
+           inputs = tokenizer(text, return_tensors="pt", truncation=True)
+           with torch.no_grad():
+               outputs = model(**inputs)
+           # Mean pooling over sequence
+           return outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
+       ```
+
+    Args:
+        text: The text string to encode.
+        embedding_dim: Dimension of the output embedding (default: 768).
+                       Common values: 384, 768, 1024, 1536, 4096.
+        encoder: Optional external encoder object. If provided, should have
+                 an `encode(text)` method returning an np.ndarray.
+
+    Returns:
+        np.ndarray of shape [embedding_dim] containing the text embedding.
+
+    Example:
+        >>> embedding = encode_text("What is the capital of France?")
+        >>> print(embedding.shape)
+        (768,)
+        >>> # Use with TRLinkosTRM reasoning
+        >>> output, dag = reasoning_layer.reason(embedding.reshape(1, -1))
+    """
+    import hashlib
+
+    # If an external encoder is provided, use it
+    if encoder is not None:
+        if hasattr(encoder, "encode"):
+            result = encoder.encode(text)
+            if isinstance(result, np.ndarray):
+                return result.flatten()[:embedding_dim] if len(result.flatten()) > embedding_dim else np.pad(
+                    result.flatten(), (0, max(0, embedding_dim - len(result.flatten())))
+                )
+            return np.array(result).flatten()
+
+    # Stub implementation: deterministic hash-based embedding
+    # This creates reproducible embeddings based on text content
+    text_bytes = text.encode("utf-8")
+    hash_digest = hashlib.sha512(text_bytes).digest()
+
+    # Expand hash to embedding_dim using repeated hashing
+    embedding_parts = []
+    current_bytes = text_bytes
+    while len(embedding_parts) * 64 < embedding_dim:
+        current_hash = hashlib.sha512(current_bytes).digest()
+        embedding_parts.append(np.frombuffer(current_hash, dtype=np.uint8))
+        current_bytes = current_hash
+
+    # Combine and normalize
+    raw_embedding = np.concatenate(embedding_parts).astype(np.float64)[:embedding_dim]
+    # Normalize to [-1, 1] range and apply L2 normalization
+    raw_embedding = (raw_embedding / 127.5) - 1.0
+    norm = np.linalg.norm(raw_embedding)
+    if norm > 0:
+        raw_embedding = raw_embedding / norm
+
+    return raw_embedding
+
+
+def reason_over_candidates(
+    query_embedding: np.ndarray,
+    candidate_embeddings: np.ndarray,
+    reasoning_layer: Optional["TRLinkOSReasoningLayer"] = None,
+    reasoning_steps: int = 4,
+    return_all_scores: bool = False,
+) -> Tuple[np.ndarray, int]:
+    """Score and rank candidates using TRLinkosTRM reasoning.
+
+    This function performs reranking of candidate responses/documents
+    by using TRLinkosTRM to reason about the relationship between
+    a query and multiple candidates. This is useful for:
+
+    - **Response reranking**: Given an LLM query and multiple generated
+      responses, select the best one.
+    - **Document retrieval**: Rerank retrieved documents for RAG pipelines.
+    - **Answer selection**: Choose the best answer from multiple candidates.
+
+    **How it works:**
+    1. Each candidate is paired with the query.
+    2. TRLinkosTRM reasons over each pair to produce an enhanced representation.
+    3. Scores are computed based on reasoning quality (cosine similarity
+       between reasoned output and query).
+    4. Returns scores and the index of the best candidate.
+
+    **Typical usage in a RAG pipeline:**
+    ```python
+    # Step 1: Encode query and candidates
+    query_emb = encode_text("What causes climate change?")
+    candidates = [
+        "Climate change is caused by greenhouse gases.",
+        "The weather is nice today.",
+        "CO2 emissions from fossil fuels drive global warming.",
+    ]
+    candidate_embs = np.array([encode_text(c) for c in candidates])
+
+    # Step 2: Reason and rerank
+    scores, best_idx = reason_over_candidates(query_emb, candidate_embs)
+
+    # Step 3: Select best response
+    best_response = candidates[best_idx]
+    print(f"Best response: {best_response}")
+    print(f"Scores: {scores}")
+    ```
+
+    **Integration with LLM response selection:**
+    ```python
+    # Generate multiple responses from LLM
+    responses = llm.generate(prompt, num_return_sequences=5)
+
+    # Encode and reason
+    query_emb = encode_text(prompt)
+    response_embs = np.array([encode_text(r) for r in responses])
+    scores, best_idx = reason_over_candidates(query_emb, response_embs)
+
+    # Select the best reasoned response
+    final_response = responses[best_idx]
+    ```
+
+    Args:
+        query_embedding: Query vector [embedding_dim] or [1, embedding_dim].
+        candidate_embeddings: Candidate vectors [num_candidates, embedding_dim].
+        reasoning_layer: Optional TRLinkOSReasoningLayer. If None, creates
+                         a default layer configured for the embedding dimension.
+        reasoning_steps: Number of reasoning steps per candidate (default: 4).
+        return_all_scores: If True, returns detailed per-step scores.
+
+    Returns:
+        Tuple of:
+        - scores: np.ndarray [num_candidates] with reasoning-based scores.
+          Higher scores indicate better matches.
+        - best_index: int, index of the highest-scoring candidate.
+
+    Example:
+        >>> query = np.random.randn(768)
+        >>> candidates = np.random.randn(5, 768)
+        >>> scores, best_idx = reason_over_candidates(query, candidates)
+        >>> print(f"Best candidate index: {best_idx}")
+        >>> print(f"Scores: {scores}")
+    """
+    # Ensure query is 2D
+    if query_embedding.ndim == 1:
+        query_embedding = query_embedding.reshape(1, -1)
+
+    # Ensure candidates are 2D
+    if candidate_embeddings.ndim == 1:
+        candidate_embeddings = candidate_embeddings.reshape(1, -1)
+
+    num_candidates, embedding_dim = candidate_embeddings.shape
+
+    # Create reasoning layer if not provided
+    if reasoning_layer is None:
+        config = ReasoningConfig(
+            input_dim=embedding_dim,
+            output_dim=min(embedding_dim // 4, 256),
+            z_dim=min(embedding_dim // 8, 128),
+            hidden_dim=min(embedding_dim // 4, 256),
+            num_experts=4,
+            max_reasoning_steps=reasoning_steps,
+            project_to_llm_dim=True,  # Project back for comparison
+        )
+        reasoning_layer = TRLinkOSReasoningLayer(config)
+
+    # Reason over each candidate paired with query
+    scores = np.zeros(num_candidates)
+
+    for i in range(num_candidates):
+        # Combine query and candidate (concatenate or average)
+        combined = (query_embedding + candidate_embeddings[i:i+1]) / 2.0
+
+        # Run reasoning
+        reasoned_output, dag = reasoning_layer.reason(combined)
+
+        # Score based on similarity between reasoned output and query
+        # Higher score = better reasoning alignment
+        query_norm = query_embedding / (np.linalg.norm(query_embedding) + 1e-10)
+        output_norm = reasoned_output / (np.linalg.norm(reasoned_output) + 1e-10)
+        similarity = np.sum(query_norm * output_norm)
+
+        # Also consider DAG quality (more nodes explored = more thorough)
+        dag_quality = min(len(dag.nodes) / (reasoning_steps * 2), 1.0)
+
+        scores[i] = similarity + 0.1 * dag_quality
+
+    best_index = int(np.argmax(scores))
+    return scores, best_index
+
+
+def multi_step_reasoning(
+    history: List[np.ndarray],
+    new_input: np.ndarray,
+    reasoning_layer: Optional["TRLinkOSReasoningLayer"] = None,
+    context_window: int = 5,
+) -> Tuple[np.ndarray, Dict[str, Any]]:
+    """Perform multi-step reasoning with conversation history.
+
+    This function enables chain-of-thought style reasoning where the
+    TRLinkosTRM layer builds upon previous reasoning steps. It's designed
+    for:
+
+    - **Multi-turn conversations**: Maintain reasoning context across turns.
+    - **Iterative refinement**: Progressively improve responses.
+    - **Complex problem solving**: Break down problems into steps.
+
+    **How it works:**
+    1. Aggregates recent history embeddings (within context_window).
+    2. Combines history context with new input.
+    3. Runs TRLinkosTRM reasoning on the combined representation.
+    4. Returns enhanced output and metadata about the reasoning process.
+
+    **Typical usage for multi-turn reasoning:**
+    ```python
+    # Initialize history
+    history = []
+
+    # Turn 1
+    q1 = encode_text("What is machine learning?")
+    output1, meta1 = multi_step_reasoning(history, q1)
+    history.append(output1)
+
+    # Turn 2 (builds on Turn 1)
+    q2 = encode_text("How is it different from deep learning?")
+    output2, meta2 = multi_step_reasoning(history, q2)
+    history.append(output2)
+
+    # Turn 3 (builds on Turns 1 & 2)
+    q3 = encode_text("Give me a practical example.")
+    output3, meta3 = multi_step_reasoning(history, q3)
+
+    # output3 now incorporates reasoning from all previous turns
+    print(f"Reasoning steps taken: {meta3['total_reasoning_steps']}")
+    ```
+
+    **Integration with LLM chain-of-thought:**
+    ```python
+    # Enhance LLM outputs with multi-step reasoning
+    llm_outputs = []
+    reasoning_history = []
+
+    for step_prompt in chain_of_thought_prompts:
+        # Get LLM response
+        llm_response = llm.generate(step_prompt)
+        llm_emb = encode_text(llm_response)
+
+        # Enhance with TRLinkosTRM reasoning
+        enhanced, meta = multi_step_reasoning(reasoning_history, llm_emb)
+        reasoning_history.append(enhanced)
+        llm_outputs.append({
+            'response': llm_response,
+            'enhanced_embedding': enhanced,
+            'reasoning_quality': meta['best_score']
+        })
+    ```
+
+    Args:
+        history: List of previous embeddings [embedding_dim] each.
+                 Can be empty for the first turn.
+        new_input: New input embedding [embedding_dim] or [1, embedding_dim].
+        reasoning_layer: Optional TRLinkOSReasoningLayer. If None, creates
+                         a default layer configured for the embedding dimension.
+        context_window: Maximum number of history items to consider (default: 5).
+
+    Returns:
+        Tuple of:
+        - output: np.ndarray [embedding_dim] with enhanced representation.
+        - metadata: Dict with reasoning information:
+          - 'num_history_items': Number of history items used
+          - 'total_reasoning_steps': Total reasoning steps taken
+          - 'best_score': Best score from DAG (if scorer was used)
+          - 'dag_nodes': Number of nodes in reasoning DAG
+
+    Example:
+        >>> history = [np.random.randn(768) for _ in range(3)]
+        >>> new_input = np.random.randn(768)
+        >>> output, meta = multi_step_reasoning(history, new_input)
+        >>> print(f"Output shape: {output.shape}")
+        >>> print(f"Metadata: {meta}")
+    """
+    # Ensure new_input is 1D for consistency
+    if new_input.ndim == 2:
+        new_input = new_input.squeeze(0)
+
+    embedding_dim = len(new_input)
+
+    # Create reasoning layer if not provided
+    if reasoning_layer is None:
+        config = ReasoningConfig(
+            input_dim=embedding_dim,
+            output_dim=min(embedding_dim // 4, 256),
+            z_dim=min(embedding_dim // 8, 128),
+            hidden_dim=min(embedding_dim // 4, 256),
+            num_experts=4,
+            max_reasoning_steps=8,
+            project_to_llm_dim=True,
+        )
+        reasoning_layer = TRLinkOSReasoningLayer(config)
+
+    # Get recent history within context window
+    recent_history = history[-context_window:] if len(history) > context_window else history
+
+    # Aggregate history context (if any)
+    if len(recent_history) > 0:
+        # Weighted aggregation: more recent items have higher weight
+        weights = np.array([0.5 ** (len(recent_history) - i - 1) for i in range(len(recent_history))])
+        weights = weights / weights.sum()
+
+        history_embeddings = np.array([
+            h.squeeze() if h.ndim > 1 else h for h in recent_history
+        ])
+        history_context = np.average(history_embeddings, axis=0, weights=weights)
+
+        # Combine history context with new input
+        combined_input = (history_context + new_input) / 2.0
+    else:
+        combined_input = new_input
+
+    # Reshape for reasoning layer [1, embedding_dim]
+    combined_input = combined_input.reshape(1, -1)
+
+    # Define a scorer that rewards coherence with new input
+    def coherence_scorer(x: np.ndarray, y: np.ndarray) -> np.ndarray:
+        # Score based on similarity to new input (coherence)
+        y_flat = y.reshape(-1)[:embedding_dim]
+        if len(y_flat) < embedding_dim:
+            y_flat = np.pad(y_flat, (0, embedding_dim - len(y_flat)))
+        similarity = np.dot(new_input, y_flat) / (
+            np.linalg.norm(new_input) * np.linalg.norm(y_flat) + 1e-10
+        )
+        return np.array([similarity])
+
+    # Run reasoning
+    output, dag = reasoning_layer.reason(combined_input, scorer=coherence_scorer)
+
+    # Get best score from DAG
+    best_node = dag.get_best_node()
+    best_score = best_node.score if best_node is not None else None
+
+    # Build metadata
+    metadata = {
+        "num_history_items": len(recent_history),
+        "total_reasoning_steps": len(dag.nodes),
+        "best_score": best_score,
+        "dag_nodes": len(dag.nodes),
+        "depth_stats": dag.get_depth_statistics(),
+    }
+
+    # Return flattened output
+    return output.squeeze(0), metadata
+
+
+# ============================
 #  Tests
 # ============================
 
@@ -1149,6 +1575,129 @@ if __name__ == "__main__":
         print(f"[Test 11] Best node step: {trace['best_node']['step']}")
 
     print("[Test 11] ✅ End-to-end pipeline works correctly!")
+
+    # --- Test 12: encode_text function ---
+    print("\n--- Test 12: encode_text function ---")
+
+    # Test basic encoding
+    text = "What is the capital of France?"
+    embedding = encode_text(text, embedding_dim=768)
+    assert embedding.shape == (768,), f"Unexpected shape: {embedding.shape}"
+    print(f"[Test 12] Text embedding shape: {embedding.shape}")
+
+    # Test determinism (same text -> same embedding)
+    embedding2 = encode_text(text, embedding_dim=768)
+    np.testing.assert_array_almost_equal(embedding, embedding2)
+    print("[Test 12] Embeddings are deterministic ✓")
+
+    # Test different texts produce different embeddings
+    text2 = "What is the weather today?"
+    embedding3 = encode_text(text2, embedding_dim=768)
+    assert not np.allclose(embedding, embedding3), "Different texts should have different embeddings"
+    print("[Test 12] Different texts produce different embeddings ✓")
+
+    # Test embedding normalization
+    norm = np.linalg.norm(embedding)
+    assert abs(norm - 1.0) < 0.01, f"Embedding should be normalized, got norm={norm}"
+    print(f"[Test 12] Embedding norm: {norm:.4f} (normalized)")
+
+    print("[Test 12] ✅ encode_text works correctly!")
+
+    # --- Test 13: reason_over_candidates function ---
+    print("\n--- Test 13: reason_over_candidates function ---")
+
+    # Create query and candidates
+    query = encode_text("What causes climate change?", embedding_dim=256)
+    candidates = np.array([
+        encode_text("Climate change is caused by greenhouse gases.", embedding_dim=256),
+        encode_text("The weather is nice today.", embedding_dim=256),
+        encode_text("CO2 emissions from fossil fuels drive global warming.", embedding_dim=256),
+    ])
+
+    scores, best_idx = reason_over_candidates(query, candidates, reasoning_steps=3)
+
+    assert scores.shape == (3,), f"Unexpected scores shape: {scores.shape}"
+    assert 0 <= best_idx < 3, f"Invalid best_idx: {best_idx}"
+    print(f"[Test 13] Scores: {scores}")
+    print(f"[Test 13] Best candidate index: {best_idx}")
+
+    # Test with 1D query
+    query_1d = np.random.randn(128)
+    candidates_2d = np.random.randn(4, 128)
+    scores2, best_idx2 = reason_over_candidates(query_1d, candidates_2d, reasoning_steps=2)
+    assert scores2.shape == (4,)
+    print(f"[Test 13] Scores with random data: {scores2}")
+
+    print("[Test 13] ✅ reason_over_candidates works correctly!")
+
+    # --- Test 14: multi_step_reasoning function ---
+    print("\n--- Test 14: multi_step_reasoning function ---")
+
+    # Test with empty history (first turn)
+    new_input = encode_text("What is machine learning?", embedding_dim=256)
+    output1, meta1 = multi_step_reasoning([], new_input)
+
+    assert output1.shape == (256,), f"Unexpected output shape: {output1.shape}"
+    assert "num_history_items" in meta1
+    assert "total_reasoning_steps" in meta1
+    assert meta1["num_history_items"] == 0
+    print(f"[Test 14] First turn output shape: {output1.shape}")
+    print(f"[Test 14] First turn metadata: {meta1}")
+
+    # Test with history (second turn)
+    history = [output1]
+    new_input2 = encode_text("How is it different from deep learning?", embedding_dim=256)
+    output2, meta2 = multi_step_reasoning(history, new_input2)
+
+    assert output2.shape == (256,)
+    assert meta2["num_history_items"] == 1
+    print(f"[Test 14] Second turn output shape: {output2.shape}")
+    print(f"[Test 14] Second turn num_history_items: {meta2['num_history_items']}")
+
+    # Test with longer history
+    history = [np.random.randn(256) for _ in range(7)]
+    new_input3 = np.random.randn(256)
+    output3, meta3 = multi_step_reasoning(history, new_input3, context_window=5)
+
+    assert output3.shape == (256,)
+    assert meta3["num_history_items"] == 5  # Should be limited to context_window
+    print(f"[Test 14] Long history (7 items, window=5): {meta3['num_history_items']} used")
+
+    print("[Test 14] ✅ multi_step_reasoning works correctly!")
+
+    # --- Test 15: Integration test (full pipeline) ---
+    print("\n--- Test 15: Integration test (full pipeline) ---")
+
+    # Simulate a multi-turn RAG pipeline
+    queries = [
+        "What is climate change?",
+        "What causes it?",
+        "How can we prevent it?",
+    ]
+
+    reasoning_history: List[np.ndarray] = []
+    responses = []
+
+    for i, query_text in enumerate(queries):
+        # Encode query
+        query_emb = encode_text(query_text, embedding_dim=256)
+
+        # Multi-step reasoning with history
+        output, meta = multi_step_reasoning(reasoning_history, query_emb)
+        reasoning_history.append(output)
+
+        responses.append({
+            "turn": i + 1,
+            "query": query_text,
+            "reasoning_steps": meta["total_reasoning_steps"],
+            "best_score": meta["best_score"],
+        })
+        score_str = f"{meta['best_score']:.4f}" if meta['best_score'] is not None else 'N/A'
+        print(f"[Test 15] Turn {i + 1}: '{query_text[:30]}...' - "
+              f"steps={meta['total_reasoning_steps']}, score={score_str}")
+
+    assert len(responses) == 3
+    print("[Test 15] ✅ Integration pipeline works correctly!")
 
     print("\n" + "=" * 60)
     print("✅ All TRLINKOS LLM Reasoning Layer tests passed!")
