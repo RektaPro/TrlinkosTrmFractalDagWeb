@@ -1063,13 +1063,13 @@ save_results_to_file(results, "search_results.json")
 
 ## 📚 Documentation
 
-Documentation complète disponible dans ce dépôt:
+Complete documentation available in this repository:
 
 | Document | Description |
 |----------|-------------|
-| [AUDIT_COHERENCE.md](AUDIT_COHERENCE.md) | Audit de cohérence promesse/implémentation (French) |
-| [ANALYSE_IMPACT_TECHNOLOGIQUE.md](ANALYSE_IMPACT_TECHNOLOGIQUE.md) | Analyse d'impact technologique détaillée (French) |
-| [ANALYSE_IMPACT_CONNEXION_INTERNET.md](ANALYSE_IMPACT_CONNEXION_INTERNET.md) | Analyse des risques de connexion Internet (French) |
+| [AUDIT_COHERENCE.md](AUDIT_COHERENCE.md) | Promise/implementation coherence audit (French) |
+| [ANALYSE_IMPACT_TECHNOLOGIQUE.md](ANALYSE_IMPACT_TECHNOLOGIQUE.md) | Detailed technological impact analysis (French) |
+| [ANALYSE_IMPACT_CONNEXION_INTERNET.md](ANALYSE_IMPACT_CONNEXION_INTERNET.md) | Internet connectivity risk analysis (French) |
 
 ### Future Documentation (Roadmap)
 

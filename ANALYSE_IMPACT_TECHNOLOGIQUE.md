@@ -53,7 +53,7 @@ T-RLINKOS TRM++ (Tiny Recursive Linkos Model ++) est une implémentation innovan
 - **Composants principaux:** 40+ (classes et fonctions)
 - **Score de cohérence:** 100% (voir AUDIT_COHERENCE.md)
 
-### 🟢 État d'Implémentation (Mise à jour 2025-11-28)
+### 🟢 État d'Implémentation
 
 > **Ce qui est effectivement implémenté dans ce dépôt:**
 

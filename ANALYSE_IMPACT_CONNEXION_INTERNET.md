@@ -48,7 +48,7 @@ Ce document analyse l'impact potentiel de la connexion du système T-RLINKOS TRM
 
 > **La connexion de T-RLINKOS à Internet présente des risques significatifs mais aussi des opportunités.** Une approche prudente avec des mesures de sécurité robustes est recommandée si la connectivité est nécessaire.
 
-### 🟢 État d'Implémentation (Mise à jour 2025-11-28)
+### 🟢 État d'Implémentation
 
 > **Ce document est une analyse théorique/prospective.** Les recommandations de sécurité présentées ne sont pas encore implémentées dans le code.
 
