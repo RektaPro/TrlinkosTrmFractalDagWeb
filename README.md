@@ -17,6 +17,83 @@ This project implements a recursive reasoning model that combines:
 
 The model is designed to be **framework-agnostic**, using only NumPy for computation, making it portable and easy to understand.
 
+## 🔌 MCP Integration (Model Context Protocol)
+
+T-RLINKOS now supports the **Model Context Protocol (MCP)**, enabling seamless integration with LLMs and AI agents. The MCP server exposes all reasoning capabilities as tools that can be called by any MCP-compatible client.
+
+### Quick Start with MCP
+
+```bash
+# Start the MCP server (stdio mode for LLM integration)
+python mcp/server.py --stdio
+
+# Or start HTTP mode for REST API access
+python mcp/server.py --http --port 8080
+```
+
+### Available MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `reason_step` | Execute a single reasoning step with TRLinkosTRM |
+| `run_trm_recursive` | Run complete recursive reasoning loop |
+| `dag_add_node` | Add a node to the Fractal Merkle-DAG |
+| `dag_best_path` | Get the best reasoning path |
+| `dag_get_state` | Get DAG statistics and state |
+| `torque_route` | Compute expert routing weights |
+| `dcaap_forward` | Execute dCaAP cell forward pass |
+| `fractal_branch` | Create a fractal branch for exploration |
+| `evaluate_score` | Evaluate prediction scores (MSE, cosine, MAE) |
+| `load_model` / `save_model` | Model persistence |
+| `get_repo_state` / `write_repo_state` | File operations |
+
+### MCP Configuration
+
+The MCP manifest (`mcp.json`) defines all available tools and their schemas. Example usage with an MCP client:
+
+```python
+# Example: Using MCP tools programmatically
+from mcp.server import TRLinkosMCPServer
+
+server = TRLinkosMCPServer(x_dim=64, y_dim=32, z_dim=64)
+
+# Run recursive reasoning
+result = server.run_trm_recursive(
+    x=[0.1] * 64,
+    max_steps=10,
+    backtrack=True,
+)
+print(f"Prediction: {result['y_pred']}")
+print(f"DAG nodes: {result['dag_stats']['num_nodes']}")
+```
+
+### MCP Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     MCP Client (LLM/Agent)                   │
+│  (Claude, GPT, Mistral, or any MCP-compatible client)       │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ JSON-RPC over stdio/HTTP
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    TRLinkosMCPServer                        │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────┐  │
+│  │ Reasoning Tools │  │   DAG Tools     │  │ Model Tools │  │
+│  │ - reason_step   │  │ - dag_add_node  │  │ - load_model│  │
+│  │ - run_recursive │  │ - dag_best_path │  │ - save_model│  │
+│  │ - torque_route  │  │ - fractal_branch│  └─────────────┘  │
+│  │ - dcaap_forward │  └─────────────────┘                   │
+│  └─────────────────┘                                        │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      TRLinkosTRM Core                        │
+│  (dCaAP Experts, Torque Router, Fractal Merkle-DAG)         │
+└─────────────────────────────────────────────────────────────┘
+```
+
 ## 🏗️ Architecture
 
 ```
@@ -107,16 +184,29 @@ TrlinkosTrmFractalDagWeb/
 ├── t_rlinkos_trm_fractal_dag.py   # Core NumPy implementation
 ├── trlinkos_trm_torch.py          # PyTorch GPU implementation
 ├── trlinkos_llm_layer.py          # LLM reasoning layer integration
-├── train_trlinkos_xor.py          # XOR training example (PyTorch)
+├── api.py                         # FastAPI web API
+├── mcp.json                       # MCP manifest (tool definitions)
+├── mcp/                           # MCP Server Package
+│   ├── __init__.py
+│   ├── server.py                  # Main MCP server
+│   └── tools/                     # MCP tool implementations
+│       ├── __init__.py
+│       ├── reasoning.py           # Reasoning tools
+│       ├── dag.py                 # DAG manipulation tools
+│       ├── model.py               # Model persistence tools
+│       └── repo.py                # Repository file tools
+├── tests/                         # Test suite
+│   ├── test_api.py
+│   ├── test_mcp.py                # MCP server tests
+│   ├── test_dag_and_trm.py
+│   └── ...
+├── config.py                      # Training configuration
+├── encoders.py                    # Text/Image encoders (PyTorch)
+├── datasets.py                    # Dataset utilities (PyTorch)
+├── training.py                    # Training pipeline (PyTorch)
 ├── run_all_tests.py               # Complete system test runner
-├── download_data.py               # Data download utility
-├── google_scraper.py              # Google search scraper
-├── google_homepage.html           # Sample downloaded HTML data
-├── ai_results.json                # AI results data file
+├── requirements.txt               # Dependencies
 ├── README.md                      # This documentation
-├── AUDIT_COHERENCE.md             # Coherence analysis (French)
-├── ANALYSE_IMPACT_TECHNOLOGIQUE.md    # Tech impact analysis (French)
-├── ANALYSE_IMPACT_CONNEXION_INTERNET.md # Internet connectivity analysis (French)
 └── LICENSE                        # BSD 3-Clause License
 ```
 
@@ -127,7 +217,9 @@ TrlinkosTrmFractalDagWeb/
 | `t_rlinkos_trm_fractal_dag.py` | Pure NumPy recursive reasoning model | NumPy |
 | `trlinkos_trm_torch.py` | PyTorch version with GPU support | PyTorch |
 | `trlinkos_llm_layer.py` | LLM integration layer | NumPy, t_rlinkos_trm_fractal_dag |
-| `train_trlinkos_xor.py` | XOR training script | PyTorch, trlinkos_trm_torch |
+| `api.py` | FastAPI web API | FastAPI, Uvicorn |
+| `mcp/server.py` | MCP server for LLM integration | NumPy |
+| `mcp/tools/*.py` | MCP tool implementations | NumPy |
 | `run_all_tests.py` | Complete system test runner | NumPy, (optional) PyTorch |
 
 ### Utility Files
