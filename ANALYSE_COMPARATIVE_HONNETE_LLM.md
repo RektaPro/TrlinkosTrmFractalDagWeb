@@ -233,8 +233,27 @@ L'aspect "Merkle" (hashing) est utile mais pas nouveau. L'aspect "fractal" est u
 
 Le module `trlinkos_llm_layer.py` offre des adaptateurs pour les LLMs, mais :
 1. **Jamais testé** avec de vrais LLMs en pratique
-2. **Utilité non démontrée** - pourquoi un LLM aurait-il besoin de T-RLINKOS ?
+2. **Utilité non démontrée** - voir ci-dessous pour les cas d'usage théoriques
 3. **Overhead potentiel** sans bénéfice prouvé
+
+#### Pourquoi un LLM aurait-il besoin de T-RLINKOS ?
+
+**Réponse honnête :** Dans l'état actuel, un LLM n'a probablement **pas besoin** de T-RLINKOS. Les LLMs modernes sont extrêmement capables sans couche de raisonnement supplémentaire. Cependant, voici les cas d'usage **théoriques** qui pourraient justifier une telle intégration :
+
+| Cas d'usage potentiel | Justification théorique | Réalité actuelle |
+|----------------------|------------------------|------------------|
+| **Traçabilité du raisonnement** | Le Merkle-DAG permet de créer une trace cryptographique vérifiable des étapes de raisonnement, utile pour l'auditabilité réglementaire (IA Act, etc.) | ⚠️ Non validé empiriquement |
+| **Backtracking explicite** | Permet de revenir à un état antérieur quand le raisonnement diverge, potentiellement utile pour éviter les hallucinations | ⚠️ Non comparé aux méthodes existantes (beam search, self-consistency) |
+| **Exploration fractale** | Permet d'explorer plusieurs chemins de raisonnement en parallèle | ⚠️ Non démontré plus efficace que le sampling multiple |
+| **Routage sparse** | Le Torque Router pourrait réduire le coût computationnel pour certaines tâches | ⚠️ Non mesuré en pratique |
+
+**Ce qui serait nécessaire pour valider ces cas d'usage :**
+1. Intégration réelle avec un LLM open-source (Mistral-7B, Llama 2)
+2. Benchmark sur des tâches de raisonnement : GSM8K (problèmes mathématiques niveau primaire), MATH (mathématiques de compétition), LogiQA (raisonnement logique)
+3. Comparaison avec les baselines (Chain-of-Thought prompting, Self-Consistency)
+4. Mesure de l'overhead en latence et mémoire
+
+**Conclusion :** L'intégration LLM reste une promesse non tenue. Les adaptateurs existent dans le code, mais sans validation empirique, ils représentent plus une aspiration qu'une fonctionnalité utile.
 
 ---
 
