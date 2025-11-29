@@ -1162,6 +1162,7 @@ Complete documentation available in this repository:
 | [AUDIT_COHERENCE.md](AUDIT_COHERENCE.md) | Promise/implementation coherence audit (French) |
 | [ANALYSE_IMPACT_TECHNOLOGIQUE.md](ANALYSE_IMPACT_TECHNOLOGIQUE.md) | Detailed technological impact analysis (French) |
 | [ANALYSE_IMPACT_CONNEXION_INTERNET.md](ANALYSE_IMPACT_CONNEXION_INTERNET.md) | Internet connectivity risk analysis (French) |
+| [ANALYSE_COMPARATIVE_HONNETE_LLM.md](ANALYSE_COMPARATIVE_HONNETE_LLM.md) | Honest comparison with LLMs - no concessions (French) |
 
 ### Future Documentation (Roadmap)
 
