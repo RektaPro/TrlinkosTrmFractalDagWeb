@@ -92,7 +92,11 @@ class DAGVisualizer:
                         "target": node_id[:8],
                     })
 
-        # Generate safe JSON
+        # Generate safe JSON using json.dumps() which handles:
+        # - Special characters (quotes, backslashes, newlines)
+        # - Unicode characters
+        # - XSS-prone characters (already escaped by JSON spec)
+        # Note: json.dumps() produces valid JavaScript object literals
         nodes_json = json.dumps(nodes_data)
         edges_json = json.dumps(edges_data)
 

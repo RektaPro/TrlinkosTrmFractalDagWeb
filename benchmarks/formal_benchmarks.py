@@ -34,8 +34,61 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from t_rlinkos_trm_fractal_dag import (
     TRLinkosTRM,
     FractalMerkleDAG,
-    _collect_model_params,
 )
+
+# Numerical tolerance constant for benchmark comparisons
+NUMERICAL_TOLERANCE = 1e-10
+
+
+def _collect_model_params(model: TRLinkosTRM) -> Dict[str, np.ndarray]:
+    """Collect all model parameters into a dictionary.
+
+    This is a helper function for the energy efficiency benchmark.
+
+    Args:
+        model: TRLinkosTRM model
+
+    Returns:
+        Dictionary mapping parameter names to numpy arrays
+    """
+    params = {}
+
+    # x_encoder
+    params["x_encoder_W"] = model.x_encoder.W
+    params["x_encoder_b"] = model.x_encoder.b
+
+    # y_init and z_init
+    params["y_init"] = model.y_init
+    params["z_init"] = model.z_init
+
+    # Core: experts
+    for e_idx, expert in enumerate(model.core.experts):
+        for b_idx, branch_w in enumerate(expert.branch_weights):
+            params[f"expert_{e_idx}_branch_{b_idx}_W"] = branch_w.W
+            params[f"expert_{e_idx}_branch_{b_idx}_b"] = branch_w.b
+        for b_idx, threshold in enumerate(expert.branch_thresholds):
+            params[f"expert_{e_idx}_threshold_{b_idx}"] = threshold
+        params[f"expert_{e_idx}_soma_W"] = expert.soma_integration.W
+        params[f"expert_{e_idx}_soma_b"] = expert.soma_integration.b
+        params[f"expert_{e_idx}_ca_gate_W"] = expert.calcium_gate.W
+        params[f"expert_{e_idx}_ca_gate_b"] = expert.calcium_gate.b
+        params[f"expert_{e_idx}_output_W"] = expert.output_projection.W
+        params[f"expert_{e_idx}_output_b"] = expert.output_projection.b
+
+    # Core: router
+    params["router_proj_W"] = model.core.router.projection.W
+    params["router_proj_b"] = model.core.router.projection.b
+    params["router_centroids"] = model.core.router.expert_centroids
+    params["router_mass_W"] = model.core.router.mass_projection.W
+    params["router_mass_b"] = model.core.router.mass_projection.b
+
+    # Core: answer dense
+    params["answer1_W"] = model.core.answer_dense1.W
+    params["answer1_b"] = model.core.answer_dense1.b
+    params["answer2_W"] = model.core.answer_dense2.W
+    params["answer2_b"] = model.core.answer_dense2.b
+
+    return params
 
 
 @dataclass
@@ -268,7 +321,7 @@ class BenchmarkSuite:
         mean_score_bt = float(np.mean(scores_bt))
 
         # Calcul de l'amélioration
-        if abs(mean_score_no_bt) > 1e-10:
+        if abs(mean_score_no_bt) > NUMERICAL_TOLERANCE:
             improvement_percent = ((mean_score_bt - mean_score_no_bt) / abs(mean_score_no_bt)) * 100
         else:
             improvement_percent = 0.0

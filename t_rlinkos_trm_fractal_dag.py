@@ -346,6 +346,9 @@ class TorqueRouter:
 #  DivergenceDetector - Détection de divergence du raisonnement
 # ============================
 
+# Numerical tolerance constant for avoiding division by zero
+NUMERICAL_TOLERANCE = 1e-10
+
 
 class DivergenceDetector:
     """Détecte la divergence du raisonnement en temps réel.
@@ -437,7 +440,7 @@ class DivergenceDetector:
             norm_last = np.linalg.norm(last_state)
             norm_prev = np.linalg.norm(prev_state)
 
-            if norm_last > 1e-10 and norm_prev > 1e-10:
+            if norm_last > NUMERICAL_TOLERANCE and norm_prev > NUMERICAL_TOLERANCE:
                 cosine = float(np.dot(last_state, prev_state) / (norm_last * norm_prev))
                 if cosine < self.cosine_threshold:
                     return True, f"State discontinuity: cosine={cosine:.4f}"

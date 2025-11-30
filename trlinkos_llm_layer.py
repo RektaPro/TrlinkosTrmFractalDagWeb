@@ -856,6 +856,12 @@ class ChainOfThoughtAugmenter:
 #  Advanced LLM Integration
 # ============================
 
+# Constants for text processing in AdvancedLLMIntegration
+# Maximum text length to process (prevents memory issues with very long inputs)
+MAX_TEXT_LENGTH = 128
+# Modulo value for converting characters to pseudo-tokens (ASCII range)
+CHAR_TO_TOKEN_MODULO = 256
+
 
 class AdvancedLLMIntegration:
     """Intégration avancée T-RLINKOS + LLM.
@@ -940,7 +946,9 @@ class AdvancedLLMIntegration:
         else:
             # Fallback pour les adaptateurs sans tokenize
             # Génère des pseudo-tokens basés sur la longueur du texte
-            pseudo_ids = np.array([[ord(c) % 256 for c in prompt[:128]]])
+            pseudo_ids = np.array([
+                [ord(c) % CHAR_TO_TOKEN_MODULO for c in prompt[:MAX_TEXT_LENGTH]]
+            ])
             hidden_states = self.llm.get_hidden_states(pseudo_ids)
 
         # 2. Définir un scorer basé sur la cohérence
@@ -1048,7 +1056,9 @@ class AdvancedLLMIntegration:
                 tokens = self.llm.tokenize(current_context)
                 hidden = self.llm.get_hidden_states(tokens["input_ids"])
             else:
-                pseudo_ids = np.array([[ord(c) % 256 for c in current_context[:128]]])
+                pseudo_ids = np.array([
+                    [ord(c) % CHAR_TO_TOKEN_MODULO for c in current_context[:MAX_TEXT_LENGTH]]
+                ])
                 hidden = self.llm.get_hidden_states(pseudo_ids)
 
             # Raisonnement T-RLINKOS

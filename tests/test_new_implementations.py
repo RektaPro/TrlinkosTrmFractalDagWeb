@@ -11,6 +11,7 @@ This module tests:
 
 import sys
 import os
+import tempfile
 import numpy as np
 
 # Add parent directory to path
@@ -116,27 +117,29 @@ def test_dag_visualizer():
     # Create visualizer
     viz = DAGVisualizer(dag)
 
-    # Test to_html
-    html_path = "/tmp/test_viz_dag.html"
-    result = viz.to_html(html_path)
-    assert os.path.exists(html_path), "HTML file not created"
+    # Use tempfile for cross-platform compatibility
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Test to_html
+        html_path = os.path.join(tmpdir, "test_viz_dag.html")
+        result = viz.to_html(html_path)
+        assert os.path.exists(html_path), "HTML file not created"
 
-    with open(html_path, 'r') as f:
-        content = f.read()
-    assert "T-RLINKOS" in content, "HTML missing title"
-    assert "d3" in content.lower(), "HTML missing D3.js"
+        with open(html_path, 'r') as f:
+            content = f.read()
+        assert "T-RLINKOS" in content, "HTML missing title"
+        assert "d3" in content.lower(), "HTML missing D3.js"
 
-    # Test to_graphml
-    graphml_path = "/tmp/test_viz_dag.graphml"
-    viz.to_graphml(graphml_path)
-    assert os.path.exists(graphml_path), "GraphML file not created"
+        # Test to_graphml
+        graphml_path = os.path.join(tmpdir, "test_viz_dag.graphml")
+        viz.to_graphml(graphml_path)
+        assert os.path.exists(graphml_path), "GraphML file not created"
 
-    # Test to_dot
-    dot_path = "/tmp/test_viz_dag.dot"
-    viz.to_dot(dot_path)
-    assert os.path.exists(dot_path), "DOT file not created"
+        # Test to_dot
+        dot_path = os.path.join(tmpdir, "test_viz_dag.dot")
+        viz.to_dot(dot_path)
+        assert os.path.exists(dot_path), "DOT file not created"
 
-    # Test to_json
+    # Test to_json (no file output, just dict)
     json_data = viz.to_json()
     assert "metadata" in json_data
     assert "nodes" in json_data
