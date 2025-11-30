@@ -295,6 +295,194 @@ class TorqueRouter:
 
         return weights
 
+    def forward_sparse(
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        z: np.ndarray,
+        top_k: int = 2
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Routage sparse vers les top-k experts seulement.
+
+        Implémente un routage sparse qui active uniquement les top-k experts
+        les plus pertinents pour chaque échantillon. Cela permet:
+        - Réduction de 50-75% du calcul (selon k)
+        - Spécialisation accrue des experts
+        - Meilleure interprétabilité du routage
+
+        Args:
+            x: Entrée externe [B, dx]
+            y: Réponse courante [B, dy]
+            z: État interne [B, dz]
+            top_k: Nombre d'experts à activer (1 à num_experts-1)
+
+        Returns:
+            sparse_weights: Poids normalisés [B, E] avec (E - top_k) zéros
+            top_indices: Indices des experts sélectionnés [B, top_k]
+        """
+        # Obtenir les poids complets
+        weights = self.forward(x, y, z)  # [B, E]
+
+        # Valider top_k
+        top_k = max(1, min(top_k, self.num_experts))
+
+        # Sélectionner top-k experts pour chaque échantillon
+        top_indices = np.argsort(weights, axis=-1)[:, -top_k:]  # [B, top_k]
+
+        # Créer les poids sparse
+        sparse_weights = np.zeros_like(weights)  # [B, E]
+
+        for i in range(weights.shape[0]):
+            sparse_weights[i, top_indices[i]] = weights[i, top_indices[i]]
+
+        # Re-normaliser pour que la somme soit 1
+        row_sums = sparse_weights.sum(axis=-1, keepdims=True)
+        sparse_weights = sparse_weights / (row_sums + 1e-10)
+
+        return sparse_weights, top_indices
+
+
+# ============================
+#  DivergenceDetector - Détection de divergence du raisonnement
+# ============================
+
+# Numerical tolerance constant for avoiding division by zero
+NUMERICAL_TOLERANCE = 1e-10
+
+
+class DivergenceDetector:
+    """Détecte la divergence du raisonnement en temps réel.
+
+    Cette classe surveille la qualité du raisonnement et détecte quand
+    le processus diverge (hallucinations, erreurs de raisonnement).
+
+    Utilise plusieurs heuristiques:
+    1. Variance des scores sur fenêtre glissante
+    2. Distance cosinus entre états consécutifs
+    3. Gradient du score (positif = convergence)
+
+    Example:
+        >>> detector = DivergenceDetector()
+        >>> for step in range(max_steps):
+        ...     score, state = reasoning_step(...)
+        ...     detector.update(score, state)
+        ...     is_div, reason = detector.is_diverging()
+        ...     if is_div:
+        ...         print(f"Divergence detected: {reason}")
+        ...         # Trigger backtracking
+    """
+
+    def __init__(
+        self,
+        window_size: int = 5,
+        variance_threshold: float = 0.1,
+        cosine_threshold: float = 0.95,
+        gradient_threshold: float = -0.01
+    ):
+        """Initialise le détecteur de divergence.
+
+        Args:
+            window_size: Taille de la fenêtre glissante pour l'historique
+            variance_threshold: Seuil de variance des scores au-delà duquel
+                                on considère une divergence
+            cosine_threshold: Seuil de similarité cosinus en dessous duquel
+                              on détecte une discontinuité d'état
+            gradient_threshold: Seuil de gradient du score en dessous duquel
+                                on détecte une dégradation
+        """
+        self.window_size = window_size
+        self.variance_threshold = variance_threshold
+        self.cosine_threshold = cosine_threshold
+        self.gradient_threshold = gradient_threshold
+        self.score_history: List[float] = []
+        self.state_history: List[np.ndarray] = []
+
+    def update(self, score: float, state: np.ndarray) -> None:
+        """Met à jour l'historique avec une nouvelle observation.
+
+        Args:
+            score: Score de la réponse à cette étape
+            state: État (y ou z) à cette étape
+        """
+        self.score_history.append(score)
+        self.state_history.append(state.copy())
+
+        # Garder seulement la fenêtre récente
+        if len(self.score_history) > self.window_size:
+            self.score_history.pop(0)
+            self.state_history.pop(0)
+
+    def is_diverging(self) -> Tuple[bool, str]:
+        """Détecte si le raisonnement diverge.
+
+        Analyse l'historique récent pour détecter des signes de divergence:
+        - Variance élevée des scores → instabilité
+        - Faible similarité entre états → discontinuité
+        - Gradient négatif des scores → dégradation
+
+        Returns:
+            Tuple (is_diverging, reason):
+                - is_diverging: True si divergence détectée
+                - reason: Description de la raison de la divergence
+        """
+        if len(self.score_history) < 3:
+            return False, "Not enough data"
+
+        # 1. Vérifier la variance des scores
+        variance = float(np.var(self.score_history))
+        if variance > self.variance_threshold:
+            return True, f"High score variance: {variance:.4f}"
+
+        # 2. Vérifier la similarité des états (distance cosinus)
+        if len(self.state_history) >= 2:
+            last_state = self.state_history[-1].flatten()
+            prev_state = self.state_history[-2].flatten()
+            norm_last = np.linalg.norm(last_state)
+            norm_prev = np.linalg.norm(prev_state)
+
+            if norm_last > NUMERICAL_TOLERANCE and norm_prev > NUMERICAL_TOLERANCE:
+                cosine = float(np.dot(last_state, prev_state) / (norm_last * norm_prev))
+                if cosine < self.cosine_threshold:
+                    return True, f"State discontinuity: cosine={cosine:.4f}"
+
+        # 3. Vérifier le gradient du score
+        if len(self.score_history) >= 3:
+            gradient = float(np.mean(np.diff(self.score_history[-3:])))
+            if gradient < self.gradient_threshold:
+                return True, f"Score degradation: gradient={gradient:.4f}"
+
+        return False, "Converging normally"
+
+    def get_statistics(self) -> Dict[str, Any]:
+        """Retourne les statistiques de l'historique.
+
+        Returns:
+            Dict avec les statistiques clés:
+                - num_observations: Nombre d'observations
+                - score_variance: Variance des scores
+                - score_mean: Moyenne des scores
+                - score_trend: Tendance (gradient moyen)
+        """
+        if len(self.score_history) == 0:
+            return {
+                "num_observations": 0,
+                "score_variance": 0.0,
+                "score_mean": 0.0,
+                "score_trend": 0.0,
+            }
+
+        return {
+            "num_observations": len(self.score_history),
+            "score_variance": float(np.var(self.score_history)),
+            "score_mean": float(np.mean(self.score_history)),
+            "score_trend": float(np.mean(np.diff(self.score_history))) if len(self.score_history) > 1 else 0.0,
+        }
+
+    def reset(self) -> None:
+        """Réinitialise le détecteur."""
+        self.score_history = []
+        self.state_history = []
+
 
 # ============================
 #  Coeur de raisonnement TRM : TRLinkosCore
