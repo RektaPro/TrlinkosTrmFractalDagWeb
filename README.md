@@ -184,6 +184,7 @@ TrlinkosTrmFractalDagWeb/
 ├── t_rlinkos_trm_fractal_dag.py   # Core NumPy implementation
 ├── trlinkos_trm_torch.py          # PyTorch GPU implementation
 ├── trlinkos_llm_layer.py          # LLM reasoning layer integration
+├── empirical_validation.py        # Empirical validation suite
 ├── api.py                         # FastAPI web API
 ├── mcp.json                       # MCP manifest (tool definitions)
 ├── mcp/                           # MCP Server Package
@@ -217,6 +218,7 @@ TrlinkosTrmFractalDagWeb/
 | `t_rlinkos_trm_fractal_dag.py` | Pure NumPy recursive reasoning model | NumPy |
 | `trlinkos_trm_torch.py` | PyTorch version with GPU support | PyTorch |
 | `trlinkos_llm_layer.py` | LLM integration layer | NumPy, t_rlinkos_trm_fractal_dag |
+| `empirical_validation.py` | Comprehensive empirical validation suite | NumPy |
 | `api.py` | FastAPI web API | FastAPI, Uvicorn |
 | `mcp/server.py` | MCP server for LLM integration | NumPy |
 | `mcp/tools/*.py` | MCP tool implementations | NumPy |
@@ -786,6 +788,47 @@ Duration: 32.79s
 ======================================================================
 
 🎉 ALL TESTS PASSED! 🎉
+```
+
+### Empirical Validation
+
+Run the comprehensive empirical validation suite:
+
+```bash
+# Run full validation with interactive output
+python empirical_validation.py
+
+# Generate JSON report
+python empirical_validation.py --output validation_report.json
+
+# Quiet mode (summary only)
+python empirical_validation.py --quiet
+```
+
+Expected output:
+```
+======================================================================
+T-RLINKOS TRM++ EMPIRICAL VALIDATION
+======================================================================
+Running 11 validation tests...
+
+Running: dCaAP Activation... ✅ PASS (score: 0.87, 0.01s)
+Running: Torque Router... ✅ PASS (score: 1.00, 0.00s)
+Running: Merkle-DAG... ✅ PASS (score: 1.00, 0.00s)
+Running: Backtracking... ✅ PASS (score: 0.80, 0.02s)
+Running: LLM Integration... ✅ PASS (score: 1.00, 0.14s)
+...
+
+======================================================================
+VALIDATION SUMMARY
+======================================================================
+Total:  11 validations
+Passed: 11 (100.0%)
+Failed: 0
+Average Score: 0.97
+======================================================================
+
+🎉 ALL VALIDATIONS PASSED! 🎉
 ```
 
 ### Individual Module Tests
