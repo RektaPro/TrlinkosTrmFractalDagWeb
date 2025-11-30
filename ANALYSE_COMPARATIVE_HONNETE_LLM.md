@@ -566,9 +566,10 @@ Le projet T-RLINKOS TRM++ a été soumis à un protocole de validation empirique
 **Métriques clés :**
 - Score moyen avec backtracking : -0.933
 - Score moyen sans backtracking : -0.938
-- **Amélioration : +0.005** (0.53%)
+- Différence absolue : +0.005
+- **Amélioration relative :** (|-0.933| - |-0.938|) / |-0.938| × 100% = **0.53%**
 
-**Interprétation :** Le backtracking améliore ou maintient la qualité du raisonnement. L'amélioration de 0.53% est modeste mais consistante.
+**Interprétation :** Le backtracking améliore ou maintient la qualité du raisonnement. L'amélioration de 0.53% est modeste mais consistante. Les deux modèles utilisent la même initialisation (même seed) pour assurer une comparaison équitable.
 
 #### 8.2.5 Intégration LLM (Score: 1.00/1.00) ✅
 

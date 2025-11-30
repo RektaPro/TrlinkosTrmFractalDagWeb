@@ -76,8 +76,10 @@ def validate_dcaap_xor_intrinsic() -> ValidationResult:
     
     Reference: Gidon et al., Science 2020 - single neuron XOR capability
     
-    This test verifies that a single DCaAPCell can learn to solve XOR,
-    which is impossible with standard ReLU/sigmoid activations.
+    This test verifies that the dCaAP activation function has the mathematical
+    properties (non-monotonicity) that enable XOR discrimination capability.
+    Note: This tests the activation properties, not the actual learning of XOR,
+    which would require training.
     """
     start_time = time.time()
     np.random.seed(42)
@@ -135,8 +137,9 @@ def validate_dcaap_xor_intrinsic() -> ValidationResult:
     dag_valid = len(dag.nodes) > 0
     
     # Compute simple XOR score (should be better than random)
-    # Using cosine similarity between output patterns
-    y_pred_binary = (y_pred > y_pred.mean()).astype(float)
+    # Using 0.0 threshold since outputs are centered around 0
+    # This tests discrimination capability, not trained accuracy
+    y_pred_binary = (y_pred > 0.0).astype(float)
     xor_pattern_match = np.mean(y_pred_binary == Y_xor)
     
     # Overall score
@@ -389,6 +392,10 @@ def validate_backtracking_effectiveness() -> ValidationResult:
     1. Backtracking restores better states
     2. Final score with backtracking >= without
     3. Best node is returned as final output
+    
+    Note: Both models use the same random seed to ensure identical initialization,
+    making the comparison fair. The difference in performance comes solely from
+    the backtracking mechanism.
     """
     start_time = time.time()
     np.random.seed(42)
@@ -402,7 +409,7 @@ def validate_backtracking_effectiveness() -> ValidationResult:
     def scorer(x_in: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
         return -np.mean((y_pred - target) ** 2, axis=-1)
     
-    # Model without backtracking
+    # Model without backtracking - use seed for identical initialization
     np.random.seed(42)
     model_no_bt = TRLinkosTRM(x_dim, y_dim, z_dim, hidden_dim=64, num_experts=2)
     y_no_bt, dag_no_bt = model_no_bt.forward_recursive(
@@ -410,7 +417,8 @@ def validate_backtracking_effectiveness() -> ValidationResult:
     )
     scores_no_bt = scorer(x, y_no_bt)
     
-    # Model with backtracking
+    # Model with backtracking - use same seed for identical initialization
+    # This ensures the only difference is the backtracking mechanism
     np.random.seed(42)
     model_bt = TRLinkosTRM(x_dim, y_dim, z_dim, hidden_dim=64, num_experts=2)
     y_bt, dag_bt = model_bt.forward_recursive(
@@ -430,13 +438,18 @@ def validate_backtracking_effectiveness() -> ValidationResult:
     best_nodes_tracked = best_bt is not None and best_no_bt is not None
     
     # Test 4: Compare scores (backtracking should be >= no backtracking)
+    # Tolerance of 0.1 allows for minor numerical variations while ensuring
+    # backtracking doesn't significantly degrade performance
     mean_score_bt = float(np.mean(scores_bt))
     mean_score_no_bt = float(np.mean(scores_no_bt))
-    bt_improves_or_equal = mean_score_bt >= mean_score_no_bt - 0.1  # Small tolerance
+    score_tolerance = 0.1  # Allow small degradation due to numerical variation
+    bt_improves_or_equal = mean_score_bt >= mean_score_no_bt - score_tolerance
     
     # Test 5: Check that final output corresponds to best state
+    # Tolerance of 0.1 accounts for potential state updates after best node
     if best_bt is not None and best_bt.y_state is not None:
-        final_matches_best = np.allclose(y_bt[0:1], best_bt.y_state, atol=0.1)
+        state_match_tolerance = 0.1
+        final_matches_best = np.allclose(y_bt[0:1], best_bt.y_state, atol=state_match_tolerance)
     else:
         final_matches_best = False
     
@@ -1151,8 +1164,7 @@ def convert_to_json_serializable(obj: Any) -> Any:
         return {k: convert_to_json_serializable(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [convert_to_json_serializable(v) for v in obj]
-    elif isinstance(obj, bool):
-        return bool(obj)
+    # Python bool is a subclass of int, so no conversion needed for JSON
     return obj
 
 
@@ -1215,12 +1227,6 @@ def main():
         type=str,
         default=None,
         help="Output file for JSON report (default: print to stdout)"
-    )
-    parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        default=True,
-        help="Verbose output (default: True)"
     )
     parser.add_argument(
         "--quiet", "-q",
