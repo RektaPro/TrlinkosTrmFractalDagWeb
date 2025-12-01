@@ -26,9 +26,9 @@
 
 | Dossier/Fichier | Nombre de Fichiers | Cohérence | Status |
 |-----------------|-------------------|-----------|--------|
-| Racine (*.py) | 12 | 100% | ✅ Conforme |
+| Racine (*.py) | 15 | 100% | ✅ Conforme |
 | `benchmarks/` | 2 | 100% | ✅ Conforme |
-| `mcp/` | 6 | 100% | ✅ Conforme |
+| `mcp/` | 7 | 100% | ✅ Conforme |
 | `tests/` | 10 | 100% | ✅ Conforme |
 | Configuration | 4 | 100% | ✅ Conforme |
 
@@ -40,7 +40,7 @@
 
 ```
 TrlinkosTrmFractalDagWeb/
-├── 📄 Fichiers Python Racine (12 fichiers)
+├── 📄 Fichiers Python Racine (15 fichiers)
 │   ├── t_rlinkos_trm_fractal_dag.py   # Implémentation core NumPy
 │   ├── trlinkos_trm_torch.py          # Implémentation PyTorch
 │   ├── trlinkos_llm_layer.py          # Intégration LLM
