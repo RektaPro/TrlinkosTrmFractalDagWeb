@@ -52,14 +52,16 @@ Example curl commands:
 """
 
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Dict, List, Optional, Union
+import os
+import tempfile
+from typing import Any, AsyncGenerator, Callable, Dict, List, Optional, Union
 
 import numpy as np
 
 try:
     from fastapi import FastAPI, HTTPException, Query
     from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.responses import HTMLResponse
+    from fastapi.responses import HTMLResponse, PlainTextResponse
     from pydantic import BaseModel, Field
 except ImportError as e:
     raise ImportError(
@@ -67,6 +69,7 @@ except ImportError as e:
         "Install with: pip install fastapi uvicorn"
     ) from e
 
+# Core T-RLINKOS imports - these are required for the API to function
 from t_rlinkos_trm_fractal_dag import (
     TRLinkosTRM,
     FractalMerkleDAG,
@@ -292,6 +295,113 @@ DEFAULT_Y_DIM = 32
 DEFAULT_Z_DIM = 64
 DEFAULT_HIDDEN_DIM = 256
 DEFAULT_NUM_EXPERTS = 4
+# Default number of dendritic branches in DCaAPCell
+DEFAULT_NUM_BRANCHES = 4
+
+
+# ============================
+#  Helper Functions
+# ============================
+
+
+def _generate_visualizer_output(
+    visualizer: DAGVisualizer,
+    method: Callable[[str], str],
+    suffix: str,
+) -> str:
+    """Generate visualizer output to a temp file and read it back.
+
+    Args:
+        visualizer: The DAGVisualizer instance
+        method: The visualization method to call (e.g., to_html, to_dot)
+        suffix: File suffix (e.g., '.html', '.dot')
+
+    Returns:
+        The generated content as a string
+    """
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=suffix, delete=False
+    ) as tmp:
+        method(tmp.name)
+        tmp_path = tmp.name
+
+    try:
+        with open(tmp_path, "r", encoding="utf-8") as f:
+            return f.read()
+    finally:
+        os.unlink(tmp_path)
+
+
+def _estimate_model_parameters(config: Dict[str, int]) -> Dict[str, Any]:
+    """Estimate the number of parameters in the model.
+
+    Args:
+        config: Model configuration dict with x_dim, y_dim, z_dim, hidden_dim, num_experts
+
+    Returns:
+        Dict with parameter counts for each component and total
+    """
+    x_dim = config["x_dim"]
+    y_dim = config["y_dim"]
+    z_dim = config["z_dim"]
+    hidden_dim = config["hidden_dim"]
+    num_experts = config["num_experts"]
+
+    # x_encoder: x_dim * x_dim + x_dim
+    x_encoder_params = x_dim * x_dim + x_dim
+
+    # Each expert DCaAPCell has multiple linear layers
+    # Input dimension combines x, y, and z
+    input_dim = x_dim + y_dim + z_dim
+
+    # branch_weights: (input_dim) * (hidden_dim // num_branches) per branch
+    branch_dim = hidden_dim // DEFAULT_NUM_BRANCHES
+    branch_params = input_dim * branch_dim + branch_dim
+
+    # soma: hidden_dim * hidden_dim + hidden_dim
+    soma_params = hidden_dim * hidden_dim + hidden_dim
+
+    # calcium_gate: hidden_dim * 1 + 1
+    calcium_params = hidden_dim + 1
+
+    # output: hidden_dim * z_dim + z_dim
+    output_params = hidden_dim * z_dim + z_dim
+
+    expert_params = (
+        DEFAULT_NUM_BRANCHES * branch_params
+        + soma_params
+        + calcium_params
+        + output_params
+    )
+    total_expert_params = num_experts * expert_params
+
+    # Router: projection, centroids, mass_projection
+    projection_dim = 64  # Default projection dimension in TorqueRouter
+    router_params = (
+        input_dim * projection_dim + projection_dim  # projection
+        + num_experts * projection_dim  # centroids
+        + input_dim + 1  # mass_projection
+    )
+
+    # Answer dense layers
+    answer_params = (
+        (y_dim + z_dim) * hidden_dim + hidden_dim  # dense1
+        + hidden_dim * y_dim + y_dim  # dense2
+    )
+
+    total_params = (
+        x_encoder_params + total_expert_params + router_params + answer_params
+    )
+
+    return {
+        "x_encoder_params": x_encoder_params,
+        "expert_params": expert_params,
+        "total_expert_params": total_expert_params,
+        "router_params": router_params,
+        "answer_params": answer_params,
+        "total_params": total_params,
+        "num_branches": DEFAULT_NUM_BRANCHES,
+    }
 
 
 # ============================
@@ -657,41 +767,14 @@ async def visualize_dag(
             edges=data["edges"],
         )
     elif format == "html":
-        import tempfile
-        import os
-
-        # Generate HTML to a temporary file and read it
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".html", delete=False
-        ) as tmp:
-            visualizer.to_html(tmp.name)
-            tmp_path = tmp.name
-
-        try:
-            with open(tmp_path, "r", encoding="utf-8") as f:
-                html_content = f.read()
-        finally:
-            os.unlink(tmp_path)
-
+        html_content = _generate_visualizer_output(
+            visualizer, visualizer.to_html, ".html"
+        )
         return HTMLResponse(content=html_content)
     elif format == "dot":
-        import tempfile
-        import os
-        from fastapi.responses import PlainTextResponse
-
-        # Generate DOT to a temporary file and read it
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".dot", delete=False
-        ) as tmp:
-            visualizer.to_dot(tmp.name)
-            tmp_path = tmp.name
-
-        try:
-            with open(tmp_path, "r", encoding="utf-8") as f:
-                dot_content = f.read()
-        finally:
-            os.unlink(tmp_path)
-
+        dot_content = _generate_visualizer_output(
+            visualizer, visualizer.to_dot, ".dot"
+        )
         return PlainTextResponse(content=dot_content, media_type="text/plain")
     else:
         raise HTTPException(status_code=400, detail=f"Unknown format: {format}")
@@ -716,56 +799,18 @@ async def model_info() -> ModelInfoResponse:
 
     config = app_state.config
 
-    # Estimate total parameters
-    # x_encoder: x_dim * x_dim + x_dim
-    x_encoder_params = config["x_dim"] * config["x_dim"] + config["x_dim"]
-
-    # Each expert DCaAPCell has multiple linear layers
-    # branch_weights: (x_dim + y_dim + z_dim) * (hidden_dim // num_branches) per branch
-    input_dim = config["x_dim"] + config["y_dim"] + config["z_dim"]
-    num_branches = 4  # Default in DCaAPCell
-    branch_dim = config["hidden_dim"] // num_branches
-    branch_params = input_dim * branch_dim + branch_dim
-    # soma: hidden_dim * hidden_dim + hidden_dim
-    soma_params = config["hidden_dim"] * config["hidden_dim"] + config["hidden_dim"]
-    # calcium_gate: hidden_dim * 1 + 1
-    calcium_params = config["hidden_dim"] + 1
-    # output: hidden_dim * z_dim + z_dim
-    output_params = config["hidden_dim"] * config["z_dim"] + config["z_dim"]
-
-    expert_params = (
-        num_branches * branch_params + soma_params + calcium_params + output_params
-    )
-    total_expert_params = config["num_experts"] * expert_params
-
-    # Router: projection, centroids, mass_projection
-    router_params = (
-        input_dim * 64 + 64  # projection
-        + config["num_experts"] * 64  # centroids
-        + input_dim + 1  # mass_projection
-    )
-
-    # Answer dense layers
-    answer_params = (
-        (config["y_dim"] + config["z_dim"]) * config["hidden_dim"]
-        + config["hidden_dim"]  # dense1
-        + config["hidden_dim"] * config["y_dim"]
-        + config["y_dim"]  # dense2
-    )
-
-    total_params = (
-        x_encoder_params + total_expert_params + router_params + answer_params
-    )
+    # Use helper function for parameter estimation
+    params = _estimate_model_parameters(config)
 
     components = {
-        "x_encoder": {"params": x_encoder_params},
+        "x_encoder": {"params": params["x_encoder_params"]},
         "experts": {
             "count": config["num_experts"],
-            "params_per_expert": expert_params,
-            "total_params": total_expert_params,
+            "params_per_expert": params["expert_params"],
+            "total_params": params["total_expert_params"],
         },
-        "router": {"params": router_params},
-        "answer_layers": {"params": answer_params},
+        "router": {"params": params["router_params"]},
+        "answer_layers": {"params": params["answer_params"]},
         "text_encoder": {
             "available": app_state.text_encoder is not None,
             "output_dim": config["x_dim"],
@@ -774,7 +819,7 @@ async def model_info() -> ModelInfoResponse:
 
     return ModelInfoResponse(
         config=config,
-        total_parameters=total_params,
+        total_parameters=params["total_params"],
         components=components,
     )
 
