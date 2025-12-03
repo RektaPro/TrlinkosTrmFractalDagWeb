@@ -151,7 +151,7 @@ class SpikingDCaAPNeuron:
             
             # dCaAP-inspired non-linearity: anti-coincidence detection
             # When multiple inputs arrive simultaneously, reduce response
-            coincidence_factor = 1.0 / (1.0 + np.sum(spike_inputs) - spike_inputs[i])
+            coincidence_factor = 1.0 / (1.0 + np.sum(spike_inputs) - spike_inputs[i] + 1e-8)
             
             # Update dendritic potential
             self.v_dendrites[i] += cfg.dt * (dv_dend + i_dend * coincidence_factor)

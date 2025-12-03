@@ -190,8 +190,11 @@ def setup_distributed(
         init_method = "env://"
     
     # Set CUDA device for this process
+    # Note: In multi-node setups, use local_rank instead of global rank
     if backend == "nccl" and torch.cuda.is_available():
-        torch.cuda.set_device(rank % torch.cuda.device_count())
+        # Get local rank from environment if available, otherwise use modulo
+        local_rank = int(os.environ.get('LOCAL_RANK', rank % torch.cuda.device_count()))
+        torch.cuda.set_device(local_rank)
     
     dist.init_process_group(
         backend=backend,

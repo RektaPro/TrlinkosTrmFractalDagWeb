@@ -232,7 +232,7 @@ def export_torch_model_to_onnx(
     onnx.checker.check_model(onnx_model)
     print("  ✓ ONNX model is valid")
     
-    # Simplify if requested
+    # Simplify if requested (using onnx-simplifier package)
     if simplify:
         try:
             import onnxsim
@@ -244,7 +244,7 @@ def export_torch_model_to_onnx(
             else:
                 print("  ⚠️  Simplification check failed, keeping original")
         except ImportError:
-            print("  ℹ️  onnx-simplifier not available (optional)")
+            print("  ℹ️  onnx-simplifier not available (install with: pip install onnx-simplifier)")
     
     # Print model info
     print(f"\n  Model Information:")

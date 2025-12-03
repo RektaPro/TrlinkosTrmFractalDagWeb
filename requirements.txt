@@ -26,3 +26,4 @@ numba>=0.55.0
 # Uncomment below for ONNX export functionality:
 # onnx>=1.12.0
 # onnxruntime>=1.12.0
+# onnx-simplifier  # Optional: for ONNX model optimization
