@@ -15,7 +15,8 @@ Implemented Patterns:
 from .safety_guardrails import SafetyGuardrail, InputValidator, OutputValidator
 from .observability import AIObservability, MetricsCollector, HealthMonitor
 from .resilient_workflow import ResilientWorkflow, RetryStrategy, ErrorHandler
-from .goal_monitoring import GoalMonitor, SuccessCriteria, ProgressTracker
+from .goal_monitoring import GoalMonitor, SuccessCriteria, ProgressTracker, GoalDefinition
+from .enhanced_trm import EnhancedTRLinkosTRM, EnhancedTRMConfig
 
 __all__ = [
     "SafetyGuardrail",
@@ -30,6 +31,9 @@ __all__ = [
     "GoalMonitor",
     "SuccessCriteria",
     "ProgressTracker",
+    "GoalDefinition",
+    "EnhancedTRLinkosTRM",
+    "EnhancedTRMConfig",
 ]
 
 __version__ = "1.0.0"
