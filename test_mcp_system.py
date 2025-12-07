@@ -37,7 +37,7 @@ def test_system_tools():
     
     # Test 3: execute_command
     print("\n3. Testing execute_command...")
-    result = server.execute_command("echo Hello from MCP")
+    result = server.execute_command("python -c \"print('Hello from MCP')\"")
     assert result["status"] == "success", "execute_command failed"
     assert "Hello from MCP" in result["stdout"], "command output incorrect"
     print(f"   ✓ Command output: {result['stdout'].strip()}")
@@ -99,7 +99,7 @@ def test_tool_call_interface():
     # Test execute_command through handle_tool_call
     print("\n1. Testing execute_command via handle_tool_call...")
     result = server.handle_tool_call("execute_command", {
-        "command": "echo MCP Tool Call"
+        "command": "python -c \"print('MCP Tool Call')\""
     })
     assert result["status"] == "success", "tool call failed"
     print(f"   ✓ Output: {result['stdout'].strip()}")

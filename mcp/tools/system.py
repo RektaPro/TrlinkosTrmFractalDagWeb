@@ -31,8 +31,14 @@ def execute_command(
         # Split command into args using shlex for proper parsing
         if isinstance(command, str):
             cmd_args = shlex.split(command)
-        else:
+        elif isinstance(command, list):
             cmd_args = command
+        else:
+            return {
+                "status": "error",
+                "error": "Command must be a string or list",
+                "command": str(command),
+            }
         
         # Prepare environment
         exec_env = os.environ.copy()
