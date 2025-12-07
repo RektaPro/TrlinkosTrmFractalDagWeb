@@ -1631,7 +1631,7 @@ class MultiHeadAttention(nn.Module):
         V = self.value_proj(states)   # [B, 3, d_v]
         
         # Attention scores
-        scores = torch.matmul(Q, K.transpose(-2, -1)) / sqrt(d_k)
+        scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(d_k)
         attention_weights = F.softmax(scores, dim=-1)
         
         # Weighted values
@@ -1664,7 +1664,7 @@ class CrossAttentionExperts(nn.Module):
         V = self.value_proj(expert_outputs)
         
         # Cross-attention entre experts
-        attention = torch.matmul(Q, K.transpose(-2, -1)) / sqrt(d_k)
+        attention = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(d_k)
         
         # Masque avec routing weights
         attention = attention * routing_weights.unsqueeze(1)
@@ -1707,7 +1707,7 @@ class TemporalAttentionDAG(nn.Module):
         pos_encoding = self.positional_encoding(max_lookback)
         K = K + pos_encoding
         
-        scores = torch.matmul(Q, K.transpose(-2, -1)) / sqrt(d_k)
+        scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(d_k)
         attention_weights = F.softmax(scores, dim=-1)
         
         # Contexte depuis historique
@@ -1878,10 +1878,15 @@ class ChromaDBMemory:
 class FAISSMemory:
     def __init__(self, dimension, metric):
         import faiss
-        self.metric = metric  # Store metric for later use
+        # Validation et stockage de la métrique
+        supported_metrics = ["cosine", "euclidean"]
+        if metric not in supported_metrics:
+            raise ValueError(f"Metric {metric} non supporté. Utilisez: {supported_metrics}")
+        self.metric = metric
         
         if self.metric == "cosine":
-            # Normalisation pour cosine similarity
+            # IndexFlatIP calcule le produit scalaire (inner product)
+            # Sur vecteurs normalisés, équivalent à cosine similarity
             self.index = faiss.IndexFlatIP(dimension)
         elif self.metric == "euclidean":
             self.index = faiss.IndexFlatL2(dimension)
@@ -2096,7 +2101,7 @@ class MemoryManager:
 ```
 
 **Bénéfices de la mémoire externe :**
-- ✅ Contexte illimité (pas de limite de tokens)
+- ✅ Contexte très large (significativement plus que limites de tokens)
 - ✅ Mémoire à long terme persistante
 - ✅ Apprentissage incrémental
 - ✅ Partage de connaissances entre instances
