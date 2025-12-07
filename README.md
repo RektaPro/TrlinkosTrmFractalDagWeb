@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/RektaPro/TrlinkosTrmFractalDagWeb/branch/main/graph/badge.svg)](https://codecov.io/gh/RektaPro/TrlinkosTrmFractalDagWeb)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-**T-RLINKOS TRM++ (Tiny Recursive Linkos Model ++)** is a pure NumPy implementation of a recursive reasoning architecture inspired by neuroscience research and modern clustering techniques. Now enhanced with **AI Architecture Blueprints** for production-ready deployments.
+**T-RLINKOS TRM++ (Tiny Recursive Linkos Model ++)** is a pure NumPy implementation of a recursive reasoning architecture inspired by neuroscience research and modern clustering techniques. Now enhanced with **AI Architecture Blueprints** for production-ready deployments and **integrated with THRML** for probabilistic graphical models.
 
 ## 🧠 Overview
 
@@ -18,6 +18,7 @@ This project implements a recursive reasoning model that combines:
 - **Fractal Merkle-DAG** for reasoning trace auditing and backtracking
 - **Mixture of Experts (MoE)** architecture with biologically-inspired activation functions
 - **🆕 AI Architecture Blueprints** - Enterprise-grade safety, observability, and resilience
+- **🆕 THRML Integration** - JAX-based probabilistic graphical models and energy-based inference
 
 The model is designed to be **framework-agnostic**, using only NumPy for computation, making it portable and easy to understand.
 
@@ -277,6 +278,67 @@ A fractal data structure for reasoning audit:
 - **Fractal**: Self-similar structure with recursive branches
 - **Backtracking**: State restoration to best-scoring nodes
 
+## 🔥 THRML Integration (NEW!)
+
+This repository now includes **THRML (Thermodynamic Hypergraphical Model Library)**, a JAX-based library from Extropic AI for probabilistic graphical models and energy-based inference.
+
+### What is THRML?
+
+THRML provides:
+- **Block Gibbs Sampling** for efficient inference on probabilistic graphical models (PGMs)
+- **Energy-Based Models (EBMs)** including Ising models and Restricted Boltzmann Machines
+- **GPU-Accelerated Sampling** using JAX for maximum parallelism
+- **Heterogeneous Graphical Models** with arbitrary node states
+- **Thermodynamic Computing** prototypes for future energy-efficient hardware
+
+### Quick Start with THRML
+
+```python
+import jax
+import jax.numpy as jnp
+from thrml import SpinNode, Block, SamplingSchedule, sample_states
+from thrml.models import IsingEBM, IsingSamplingProgram, hinton_init
+
+# Create an Ising chain
+nodes = [SpinNode() for _ in range(5)]
+edges = [(nodes[i], nodes[i+1]) for i in range(4)]
+biases = jnp.zeros((5,))
+weights = jnp.ones((4,)) * 0.5
+beta = jnp.array(1.0)
+model = IsingEBM(nodes, edges, biases, weights, beta)
+
+# Define sampling blocks
+free_blocks = [Block(nodes[::2]), Block(nodes[1::2])]
+program = IsingSamplingProgram(model, free_blocks, clamped_blocks=[])
+
+# Sample from the model
+key = jax.random.key(0)
+k_init, k_samp = jax.random.split(key, 2)
+init_state = hinton_init(k_init, model, free_blocks, ())
+schedule = SamplingSchedule(n_warmup=100, n_samples=1000, steps_per_sample=2)
+
+samples = sample_states(k_samp, program, schedule, init_state, [], [Block(nodes)])
+print(f"Sampled {samples[0].shape[0]} states")
+```
+
+### THRML + TRLinkosTRM Integration
+
+Combine deterministic recursive reasoning (TRLinkosTRM) with probabilistic sampling (THRML):
+
+1. **Probabilistic Expert Routing**: Use THRML's EBMs for uncertainty-aware expert selection
+2. **Energy-Based Backtracking**: Sample alternative reasoning paths in the Fractal DAG
+3. **Hybrid Optimization**: Combine deterministic forward passes with probabilistic exploration
+4. **Thermodynamic Inference**: Leverage energy-based models for robust decision-making
+
+See [THRML_INTEGRATION.md](THRML_INTEGRATION.md) for complete documentation and advanced examples.
+
+### THRML Examples
+
+- **examples/thrml_demo.py**: Simple Ising model sampling demonstration
+- **examples/00_probabilistic_computing.ipynb**: Introduction to probabilistic computing
+- **examples/01_all_of_thrml.ipynb**: Comprehensive THRML library tour
+- **examples/02_spin_models.ipynb**: Working with Ising models and spin systems
+
 ## 📦 Installation
 
 ### Prerequisites
@@ -304,6 +366,7 @@ pip install requests beautifulsoup4
 
 **What's included with `pip install -r requirements.txt`:**
 - ✅ NumPy (core dependency)
+- ✅ JAX + Equinox + JaxTyping (THRML dependencies)
 - ✅ Numba (2-5x speedup via JIT compilation)
 - ✅ ONNX + ONNX Runtime (model export for production)
 - ✅ pytest (testing)
@@ -332,9 +395,26 @@ TrlinkosTrmFractalDagWeb/
 │   ├── resilient_workflow.py      # Retry and circuit breakers
 │   ├── goal_monitoring.py         # Progress tracking
 │   └── enhanced_trm.py            # Enhanced TRM wrapper
+├── thrml/                         # 🆕 THRML library (JAX-based PGMs)
+│   ├── __init__.py
+│   ├── block_management.py        # Block organization and state management
+│   ├── block_sampling.py          # Core Gibbs sampling algorithms
+│   ├── conditional_samplers.py    # Sampling strategies
+│   ├── factor.py                  # Factor-based PGM representations
+│   ├── interaction.py             # Node interactions
+│   ├── observers.py               # Sampling observation and metrics
+│   ├── pgm.py                     # Base PGM node classes
+│   └── models/                    # Pre-built THRML models
+│       ├── discrete_ebm.py        # Discrete energy-based models
+│       ├── ebm.py                 # General EBM interface
+│       └── ising.py               # Ising model implementations
 ├── examples/                      # 🆕 Example scripts
 │   ├── __init__.py
-│   └── blueprints_demo.py         # Complete blueprint demonstration
+│   ├── blueprints_demo.py         # Complete blueprint demonstration
+│   ├── thrml_demo.py              # 🆕 THRML Ising model demo
+│   ├── 00_probabilistic_computing.ipynb  # 🆕 THRML intro
+│   ├── 01_all_of_thrml.ipynb      # 🆕 THRML complete tour
+│   └── 02_spin_models.ipynb       # 🆕 THRML spin systems
 ├── mcp.json                       # MCP manifest (tool definitions)
 ├── mcp/                           # MCP Server Package
 │   ├── __init__.py
