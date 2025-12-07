@@ -1551,7 +1551,8 @@ Complete documentation available in this repository:
 
 | Document | Description |
 |----------|-------------|
-| [BLUEPRINTS_INTEGRATION.md](BLUEPRINTS_INTEGRATION.md) | 🆕 AI Architecture Blueprints integration guide |
+| [BILAN_TECHNIQUE_IA.md](BILAN_TECHNIQUE_IA.md) | 🆕 **Comprehensive technical analysis: Is T-RLINKOS an AI?** (French) |
+| [BLUEPRINTS_INTEGRATION.md](BLUEPRINTS_INTEGRATION.md) | AI Architecture Blueprints integration guide |
 | [THE-BLUEPRINTS.md](THE-BLUEPRINTS.md) | AI Architecture Blueprints patterns catalog |
 | [AUDIT_COHERENCE.md](AUDIT_COHERENCE.md) | Promise/implementation coherence audit (French) |
 | [ANALYSE_IMPACT_TECHNOLOGIQUE.md](ANALYSE_IMPACT_TECHNOLOGIQUE.md) | Detailed technological impact analysis (French) |
