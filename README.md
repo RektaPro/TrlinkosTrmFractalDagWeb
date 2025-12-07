@@ -624,7 +624,7 @@ Main model class for recursive reasoning.
 ```python
 TRLinkosTRM(
     x_dim: int,           # Input dimension
-    y_dim: int,           # Output dimension  
+    y_dim: int,           # Output dimension
     z_dim: int,           # Internal state dimension
     hidden_dim: int = 256,  # Hidden layer size
     num_experts: int = 4    # Number of dCaAP experts
@@ -1143,7 +1143,7 @@ for i, (x, y) in enumerate(dataloader):
         output = model(x.cuda())
         loss = criterion(output, y.cuda())
         accumulator.backward(loss)
-    
+
     if accumulator.should_step(i):
         optimizer.step()
         optimizer.zero_grad()
@@ -1554,6 +1554,8 @@ Complete documentation available in this repository:
 
 | Document | Description |
 |----------|-------------|
+| [CI_CD.md](CI_CD.md) | 🆕 **CI/CD Pipeline, Pre-commit Hooks, and Code Quality Guide** |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 🆕 **Development Guidelines and Contribution Workflow** |
 | [BILAN_TECHNIQUE_IA.md](BILAN_TECHNIQUE_IA.md) | 🆕 **Comprehensive technical analysis: Is T-RLINKOS an AI?** (French) |
 | [BLUEPRINTS_INTEGRATION.md](BLUEPRINTS_INTEGRATION.md) | AI Architecture Blueprints integration guide |
 | [THE-BLUEPRINTS.md](THE-BLUEPRINTS.md) | AI Architecture Blueprints patterns catalog |

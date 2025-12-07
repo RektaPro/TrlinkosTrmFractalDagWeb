@@ -1,12 +1,13 @@
-.PHONY: help install install-dev test test-cov lint format clean pre-commit-install pre-commit-run
+.PHONY: help install install-dev test test-cov test-all lint format clean pre-commit-install pre-commit-run
 
 help:
 	@echo "T-RLINKOS TRM++ Fractal DAG - Development Commands"
 	@echo ""
 	@echo "  install              Install core dependencies"
 	@echo "  install-dev          Install development dependencies"
-	@echo "  test                 Run tests"
+	@echo "  test                 Run tests (core dependencies only)"
 	@echo "  test-cov             Run tests with coverage report"
+	@echo "  test-all             Run complete test suite (including optional features)"
 	@echo "  lint                 Run all linters (flake8, black, isort)"
 	@echo "  format               Auto-format code with black and isort"
 	@echo "  clean                Remove build artifacts and cache"
@@ -20,10 +21,16 @@ install-dev:
 	pip install -r requirements-dev.txt
 
 test:
-	pytest tests/ -v
+	# Note: Ignoring test_training_framework.py which requires torch
+	pytest tests/ -v --ignore=tests/test_training_framework.py
 
 test-cov:
-	pytest tests/ -v --cov=. --cov-report=xml --cov-report=term --cov-report=html
+	# Note: Ignoring test_training_framework.py which requires torch
+	pytest tests/ -v --cov=. --cov-report=xml --cov-report=term --cov-report=html --ignore=tests/test_training_framework.py
+
+test-all:
+	# Run complete test suite including all optional features
+	python run_all_tests.py
 
 lint:
 	@echo "Running flake8..."
