@@ -1878,19 +1878,22 @@ class ChromaDBMemory:
 class FAISSMemory:
     def __init__(self, dimension, metric):
         import faiss
-        if metric == "cosine":
+        self.metric = metric  # Store metric for later use
+        
+        if self.metric == "cosine":
             # Normalisation pour cosine similarity
             self.index = faiss.IndexFlatIP(dimension)
-        elif metric == "euclidean":
+        elif self.metric == "euclidean":
             self.index = faiss.IndexFlatL2(dimension)
         else:
-            raise ValueError(f"Metric {metric} non supporté")
+            raise ValueError(f"Metric {self.metric} non supporté")
             
-        self.metadata_store = []  # Store metadata separately
+        # FAISS ne stocke que les vecteurs, donc métadonnées séparées
+        self.metadata_store = []
         
     def store(self, embeddings, metadata):
         """Stocke dans index FAISS"""
-        if metric == "cosine":
+        if self.metric == "cosine":
             # Normalise pour cosine similarity
             faiss.normalize_L2(embeddings)
         self.index.add(embeddings)
@@ -1898,7 +1901,7 @@ class FAISSMemory:
         
     def search(self, query_embedding, top_k=5):
         """Recherche KNN ultra-rapide"""
-        if metric == "cosine":
+        if self.metric == "cosine":
             faiss.normalize_L2(query_embedding.reshape(1, -1))
         distances, indices = self.index.search(
             query_embedding.reshape(1, -1), 
@@ -2256,9 +2259,10 @@ class PPOTrainer:
     def __init__(self, model, env, config):
         self.model = model
         self.env = env
-        self.gamma = config["gamma"]  # 0.99
-        self.lambda_gae = config["lambda"]  # 0.95
-        self.clip_epsilon = config["clip_epsilon"]  # 0.2
+        self.gamma = config.get("gamma", 0.99)
+        self.lambda_gae = config.get("lambda", 0.95)
+        self.clip_epsilon = config.get("clip_epsilon", 0.2)
+        self.ppo_epochs = config.get("ppo_epochs", 10)
         
     def train_episode(self):
         """
@@ -2280,11 +2284,31 @@ class PPOTrainer:
             
             state = next_state
         
-        # Calcul advantages (GAE)
+        # Calcul advantages (GAE - Generalized Advantage Estimation)
         advantages = self._compute_gae(states, rewards)
         
         # Update policy avec PPO
         self._update_ppo(states, actions, advantages)
+    
+    def _compute_gae(self, states, rewards):
+        """
+        Calcule Generalized Advantage Estimation
+        """
+        values = [self.model.value_net(s) for s in states]
+        advantages = []
+        gae = 0
+        
+        for t in reversed(range(len(rewards))):
+            if t == len(rewards) - 1:
+                next_value = 0
+            else:
+                next_value = values[t + 1]
+            
+            delta = rewards[t] + self.gamma * next_value - values[t]
+            gae = delta + self.gamma * self.lambda_gae * gae
+            advantages.insert(0, gae)
+        
+        return torch.tensor(advantages)
         
         return sum(rewards)
     
