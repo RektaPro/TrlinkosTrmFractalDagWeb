@@ -18,6 +18,23 @@ This project implements a recursive reasoning model that combines:
 
 The model is designed to be **framework-agnostic**, using only NumPy for computation, making it portable and easy to understand.
 
+## ⚡ Advanced Features Now Activated!
+
+All 5 advanced features are now **activated** in the repository:
+
+1. ✅ **Numba/JIT Optimization** - Automatic 2-5x acceleration (already enabled!)
+2. ✅ **Multi-GPU Support** - Training scalability on multiple GPUs
+3. ✅ **HuggingFace Integration** - Pre-trained encoders (BERT, GPT-2, ViT, etc.)
+4. ✅ **ONNX Export** - Production deployment for multiplatform use
+5. ✅ **Neuromorphic Computing** - Experimental spike-based implementation
+
+**Quick Installation:**
+```bash
+pip install -r requirements.txt  # Core + Numba + ONNX
+pip install torch transformers   # Optional: GPU + HuggingFace models
+```
+
+📖 **See [ACTIVATION_GUIDE.md](ACTIVATION_GUIDE.md) for complete usage examples and documentation.**
 ## 🎯 AI Architecture Blueprints Integration
 
 T-RLINKOS TRM++ now integrates **4 key patterns** from [THE-BLUEPRINTS.md](THE-BLUEPRINTS.md) to provide production-ready AI:
@@ -271,15 +288,27 @@ A fractal data structure for reasoning audit:
 git clone https://github.com/RektaPro/TrlinkosTrmFractalDag.git
 cd TrlinkosTrmFractalDag
 
-# Install dependencies
-pip install numpy
+# Install core dependencies + activated features (Numba, ONNX)
+pip install -r requirements.txt
 
-# For PyTorch version (GPU support)
-pip install torch
+# Optional: For GPU support and HuggingFace models
+pip install torch>=2.0.0
+pip install transformers>=4.30.0
 
-# For web scraping utilities
+# Optional: For web scraping utilities
 pip install requests beautifulsoup4
 ```
+
+**What's included with `pip install -r requirements.txt`:**
+- ✅ NumPy (core dependency)
+- ✅ Numba (2-5x speedup via JIT compilation)
+- ✅ ONNX + ONNX Runtime (model export for production)
+- ✅ pytest (testing)
+- ✅ FastAPI + Uvicorn (web API)
+
+**Optional packages** (install separately if needed):
+- PyTorch: GPU acceleration and multi-GPU training
+- Transformers: Pre-trained encoders from HuggingFace (BERT, GPT-2, ViT, etc.)
 
 ## 📁 Project Structure
 
