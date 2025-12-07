@@ -2,6 +2,8 @@
 
 import os
 import platform
+import shlex
+import shutil
 import subprocess
 import sys
 from typing import Any, Dict, List, Optional
@@ -24,8 +26,6 @@ def execute_command(
     Returns:
         Dict with stdout, stderr, return_code, and status
     """
-    import shlex
-    
     try:
         # Security: Use shell=False for better security
         # Split command into args using shlex for proper parsing
@@ -199,8 +199,6 @@ def check_command_exists(command: str) -> Dict[str, Any]:
     Returns:
         Dict with existence status and path
     """
-    import shutil
-    
     path = shutil.which(command)
     
     return {

@@ -63,10 +63,10 @@ def test_system_tools():
     
     # Test 6: get_environment_variable
     print("\n6. Testing get_environment_variable...")
-    result = server.get_environment_variable("HOME")
+    result = server.get_environment_variable("PATH")
     assert result["status"] == "success", "get_environment_variable failed"
-    assert result["value"] is not None, "HOME should be set"
-    print(f"   ✓ HOME = {result['value']}")
+    assert result["value"] is not None, "PATH should be set"
+    print(f"   ✓ PATH exists (length: {len(result['value'])})")
     
     result = server.get_environment_variable("NONEXISTENT_VAR_XYZ")
     assert result["status"] == "not_found", "nonexistent var should return not_found"
