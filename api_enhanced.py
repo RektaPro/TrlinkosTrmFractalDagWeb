@@ -52,7 +52,7 @@ except ImportError as e:
     ) from e
 
 # Core T-RLINKOS imports
-from t_rlinkos_trm_fractal_dag import TRLinkosTRM, TextEncoder
+from t_rlinkos_trm_fractal_dag import TRLinkosTRM
 
 # Blueprint imports
 from blueprints import (

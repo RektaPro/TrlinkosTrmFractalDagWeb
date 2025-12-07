@@ -285,6 +285,8 @@ class ErrorHandler:
         self.error_history.append(error_info)
         
         if self.log_errors:
+            # In production, use logging module: logging.error(f"Error handled: {error_info['type']}", exc_info=error)
+            # For now, print to maintain backward compatibility with tests
             print(f"Error handled: {error_info['type']} - {error_info['message']}")
         
         return error_info

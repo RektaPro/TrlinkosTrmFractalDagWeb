@@ -351,8 +351,10 @@ class AIObservability:
             for callback in self.alert_callbacks:
                 try:
                     callback(status)
-                except Exception as e:
-                    print(f"Alert callback failed: {e}")
+                except Exception:
+                    # Silently continue if alert callback fails
+                    # In production, use logging module: logging.warning("Alert callback failed", exc_info=True)
+                    pass
         
         return status
     

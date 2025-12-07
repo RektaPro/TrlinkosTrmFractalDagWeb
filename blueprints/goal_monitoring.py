@@ -60,8 +60,9 @@ class SuccessCriteria:
         """
         try:
             return self.check_function(state)
-        except Exception as e:
-            print(f"Error checking criteria '{self.name}': {e}")
+        except Exception:
+            # Silently return False on error
+            # In production, use logging module: logging.error(f"Error checking criteria '{self.name}'", exc_info=True)
             return False
 
 
