@@ -30,4 +30,8 @@ from .pgm import AbstractNode as AbstractNode
 from .pgm import CategoricalNode as CategoricalNode
 from .pgm import SpinNode as SpinNode
 
-__version__ = importlib.metadata.version("thrml")
+try:
+    __version__ = importlib.metadata.version("thrml")
+except importlib.metadata.PackageNotFoundError:
+    # Package not installed, use a default version
+    __version__ = "0.1.3-integrated"

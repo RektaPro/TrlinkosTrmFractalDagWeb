@@ -6,6 +6,12 @@ This example demonstrates basic usage of the THRML library
 for sampling from an Ising model using block Gibbs sampling.
 """
 
+import sys
+import os
+
+# Add parent directory to path for local imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import jax
 import jax.numpy as jnp
 from thrml import SpinNode, Block, SamplingSchedule, sample_states
