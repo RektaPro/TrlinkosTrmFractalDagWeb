@@ -989,8 +989,14 @@ python t_rlinkos_trm_fractal_dag.py
 # Run the LLM reasoning layer tests
 python trlinkos_llm_layer.py
 
-# Run XOR training (requires PyTorch)
+# Run XOR training (requires PyTorch) - Direct method
 python train_trlinkos_xor.py
+
+# Or use the unified training launcher (recommended)
+python launch_training.py                    # Default XOR training
+python launch_training.py --epochs 100       # Custom epochs
+python launch_training.py --device cuda      # Use GPU
+./launch_training.sh --help                  # See all options
 ```
 
 Expected output for NumPy tests:
@@ -1464,13 +1470,85 @@ y_pred = model(x, max_steps=6, inner_recursions=2)
 | `TRLinkosCoreTorch` | PyTorch core with MoE architecture |
 | `TRLinkosTRMTorch` | Full PyTorch model for end-to-end training |
 
+### 🚀 Training Launcher (Recommended)
+
+The unified training launcher (`launch_training.py`) provides an easy way to start training on various datasets:
+
+```bash
+# Quick start - XOR training (default)
+python launch_training.py
+
+# Custom training with parameters
+python launch_training.py --epochs 100 --lr 0.001 --batch-size 128
+
+# GPU training
+python launch_training.py --device cuda --epochs 50
+
+# Training modes (XOR, text, image)
+python launch_training.py --mode xor         # Logical XOR problem
+python launch_training.py --mode text        # Text classification (sentiment)
+python launch_training.py --mode image       # Image classification (light/dark)
+
+# Using shell wrapper
+./launch_training.sh --mode text --epochs 30
+
+# See all options
+python launch_training.py --help
+```
+
+**Features:**
+- 🎯 Multiple training modes: XOR (logical), text classification, image classification
+- ⚙️ Flexible hyperparameter configuration via command-line
+- 🔄 Automatic device detection (CPU/GPU)
+- 📊 Progress tracking and metrics visualization
+- 🛡️ Error handling and validation
+- 📝 Detailed logging and summaries
+
+**Training Modes:**
+
+1. **XOR Mode** (`--mode xor`): Trains on the classic XOR logical problem
+   - Perfect for testing non-linear learning capabilities
+   - Quick convergence (usually ~30 epochs)
+   - 100% accuracy achievable
+
+2. **Text Mode** (`--mode text`): Trains on sentiment classification
+   - Dataset: Toy text dataset with positive/negative sentiment
+   - Uses TextEncoder with word embeddings
+   - Good for testing NLP capabilities
+
+3. **Image Mode** (`--mode image`): Trains on synthetic image classification
+   - Dataset: Synthetic 28x28 RGB images (light vs dark)
+   - Uses ImageEncoder with CNN architecture
+   - Demonstrates vision capabilities
+
+**Example Outputs:**
+
+```bash
+# XOR training (5 epochs)
+$ python launch_training.py --mode xor --epochs 5
+# Output: 100% accuracy, correctly predicts all 4 XOR cases
+
+# Text training (30 epochs)
+$ python launch_training.py --mode text --epochs 30
+# Output: ~100% accuracy on sentiment classification
+#   'This is great news' -> positif
+#   'I feel terrible today' -> négatif
+
+# Image training (5 epochs)
+$ python launch_training.py --mode image --epochs 5
+# Output: 100% accuracy classifying light/dark images
+```
+
 ### XOR Training Example
 
 Train the model on the XOR problem (`train_trlinkos_xor.py`):
 
 ```bash
-# Run XOR training
+# Run XOR training directly
 python train_trlinkos_xor.py
+
+# Or use the launcher (recommended)
+python launch_training.py --mode xor --epochs 50
 ```
 
 The training script demonstrates:

@@ -401,6 +401,260 @@ def train_trlinkos_on_toy_dataset(
     return model, history
 
 
+def train_trlinkos_on_text_dataset(
+    num_epochs: int = 50,
+    batch_size: int = 32,
+    lr: float = 1e-3,
+    device: str = "cpu",
+    seed: int = 42,
+    verbose: bool = True,
+) -> tuple:
+    """Entraîne TRLinkosTRM sur un dataset de classification de texte.
+
+    Args:
+        num_epochs: Nombre d'époques d'entraînement.
+        batch_size: Taille des batches.
+        lr: Taux d'apprentissage.
+        device: Device d'entraînement ('cpu' ou 'cuda').
+        seed: Graine aléatoire pour la reproductibilité.
+        verbose: Afficher les logs d'entraînement.
+
+    Returns:
+        (model, history): Modèle entraîné et historique d'entraînement.
+    """
+    from trlinkos_trm_torch import TRLinkosTRMTorch
+    from encoders import TextEncoder
+    from datasets import ToyTextDataset, EncodedDataset
+
+    # Fixer les graines
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+
+    # Créer les datasets
+    train_text_dataset = ToyTextDataset(n_samples_per_class=500, seed=seed)
+    val_text_dataset = ToyTextDataset(n_samples_per_class=50, seed=seed + 1)
+
+    # Créer l'encodeur de texte
+    text_encoder = TextEncoder(
+        vocab_size=256,
+        embed_dim=64,
+        output_dim=32,
+        mode="word",
+    ).to(device)
+
+    # Encoder les textes
+    train_texts, train_labels = train_text_dataset.get_texts_and_labels()
+    val_texts, val_labels = val_text_dataset.get_texts_and_labels()
+
+    with torch.no_grad():
+        train_embeddings = text_encoder.encode(train_texts).to(device)
+        val_embeddings = text_encoder.encode(val_texts).to(device)
+
+    train_labels = train_labels.to(device).unsqueeze(-1)
+    val_labels = val_labels.to(device).unsqueeze(-1)
+
+    # Créer les datasets encodés
+    train_dataset = EncodedDataset(train_embeddings, train_labels)
+    val_dataset = EncodedDataset(val_embeddings, val_labels)
+
+    # Créer les dataloaders
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+
+    # Créer le modèle
+    model = TRLinkosTRMTorch(
+        x_dim=32,
+        y_dim=1,
+        z_dim=16,
+        hidden_dim=64,
+        num_experts=4,
+        num_branches=4,
+    )
+
+    # Configuration
+    config = TrainingConfig(
+        lr=lr,
+        batch_size=batch_size,
+        num_epochs=num_epochs,
+        device=device,
+        seed=seed,
+        max_steps=8,
+        inner_recursions=3,
+        log_interval=5 if verbose else num_epochs + 1,
+    )
+
+    # Créer l'optimiseur et la loss
+    optimizer = optim.Adam(model.parameters(), lr=config.lr)
+    loss_fn = nn.BCEWithLogitsLoss()
+
+    # Créer le trainer
+    trainer = Trainer(
+        model=model,
+        optimizer=optimizer,
+        loss_fn=loss_fn,
+        config=config,
+        dataloader_train=train_loader,
+        dataloader_val=val_loader,
+    )
+
+    # Entraîner
+    history = trainer.train()
+
+    if verbose:
+        print("\n--- Test sur quelques exemples ---")
+        test_texts = [
+            "This is great news",
+            "I feel terrible today",
+            "Everything seems wonderful",
+            "The result is awful",
+        ]
+        with torch.no_grad():
+            test_embeddings = text_encoder.encode(test_texts).to(device)
+            logits = model(test_embeddings, max_steps=8, inner_recursions=3)
+            probs = torch.sigmoid(logits)
+            preds = (probs > 0.5).float()
+
+        for i, text in enumerate(test_texts):
+            pred_label = "positif" if preds[i].item() == 0 else "négatif"
+            print(f"  '{text}' -> {pred_label} (prob: {probs[i].item():.2f})")
+
+    return model, history
+
+
+def train_trlinkos_on_image_dataset(
+    num_epochs: int = 50,
+    batch_size: int = 32,
+    lr: float = 1e-3,
+    device: str = "cpu",
+    seed: int = 42,
+    verbose: bool = True,
+) -> tuple:
+    """Entraîne TRLinkosTRM sur un dataset de classification d'images.
+
+    Génère un dataset synthétique d'images avec 2 classes:
+    - Classe 0: Images avec dominante claire (haute luminosité moyenne)
+    - Classe 1: Images avec dominante sombre (basse luminosité moyenne)
+
+    Args:
+        num_epochs: Nombre d'époques d'entraînement.
+        batch_size: Taille des batches.
+        lr: Taux d'apprentissage.
+        device: Device d'entraînement ('cpu' ou 'cuda').
+        seed: Graine aléatoire pour la reproductibilité.
+        verbose: Afficher les logs d'entraînement.
+
+    Returns:
+        (model, history): Modèle entraîné et historique d'entraînement.
+    """
+    from trlinkos_trm_torch import TRLinkosTRMTorch
+    from encoders import ImageEncoder
+    import numpy as np
+
+    # Fixer les graines
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+
+    # Générer un dataset d'images synthétiques
+    def generate_synthetic_images(n_samples, image_size=28, seed_offset=0):
+        np.random.seed(seed + seed_offset)
+        images = []
+        labels = []
+        for i in range(n_samples):
+            # Classe 0: images claires, Classe 1: images sombres
+            label = i % 2
+            if label == 0:
+                # Image claire avec bruit
+                img = np.random.rand(image_size, image_size, 3) * 0.5 + 0.5
+            else:
+                # Image sombre avec bruit
+                img = np.random.rand(image_size, image_size, 3) * 0.5
+
+            images.append(img)
+            labels.append(label)
+
+        # Convertir en tenseurs PyTorch [N, C, H, W]
+        images = torch.tensor(np.array(images), dtype=torch.float32).permute(0, 3, 1, 2)
+        labels = torch.tensor(labels, dtype=torch.float32).unsqueeze(-1)
+        return images, labels
+
+    # Générer train et val
+    train_images, train_labels = generate_synthetic_images(1000, seed_offset=0)
+    val_images, val_labels = generate_synthetic_images(200, seed_offset=1)
+
+    # Créer l'encodeur d'images
+    image_encoder = ImageEncoder(
+        input_channels=3,
+        output_dim=32,
+        base_channels=16,
+    ).to(device)
+
+    # Encoder les images
+    with torch.no_grad():
+        train_embeddings = image_encoder.encode(train_images.to(device))
+        val_embeddings = image_encoder.encode(val_images.to(device))
+
+    train_labels = train_labels.to(device)
+    val_labels = val_labels.to(device)
+
+    # Créer les datasets
+    from datasets import EncodedDataset
+    train_dataset = EncodedDataset(train_embeddings, train_labels)
+    val_dataset = EncodedDataset(val_embeddings, val_labels)
+
+    # Créer les dataloaders
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+
+    # Créer le modèle
+    model = TRLinkosTRMTorch(
+        x_dim=32,
+        y_dim=1,
+        z_dim=16,
+        hidden_dim=64,
+        num_experts=4,
+        num_branches=4,
+    )
+
+    # Configuration
+    config = TrainingConfig(
+        lr=lr,
+        batch_size=batch_size,
+        num_epochs=num_epochs,
+        device=device,
+        seed=seed,
+        max_steps=8,
+        inner_recursions=3,
+        log_interval=5 if verbose else num_epochs + 1,
+    )
+
+    # Créer l'optimiseur et la loss
+    optimizer = optim.Adam(model.parameters(), lr=config.lr)
+    loss_fn = nn.BCEWithLogitsLoss()
+
+    # Créer le trainer
+    trainer = Trainer(
+        model=model,
+        optimizer=optimizer,
+        loss_fn=loss_fn,
+        config=config,
+        dataloader_train=train_loader,
+        dataloader_val=val_loader,
+    )
+
+    # Entraîner
+    history = trainer.train()
+
+    if verbose:
+        print("\n--- Classification d'images ---")
+        print("  Classe 0: Images claires (haute luminosité)")
+        print("  Classe 1: Images sombres (basse luminosité)")
+
+    return model, history
+
+
 if __name__ == "__main__":
     print("=" * 60)
     print("EXEMPLE D'ENTRAÎNEMENT DE TRLINKOS SUR XOR")
