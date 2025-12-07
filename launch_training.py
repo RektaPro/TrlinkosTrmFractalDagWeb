@@ -36,8 +36,8 @@ Exemples d'utilisation:
         "--mode",
         type=str,
         default="xor",
-        choices=["xor"],
-        help="Mode d'entraînement (défaut: xor)"
+        choices=["xor", "text", "image"],
+        help="Mode d'entraînement: 'xor' (logique), 'text' (classification de texte), 'image' (classification d'images) (défaut: xor)"
     )
 
     # Hyperparamètres d'entraînement
@@ -211,6 +211,200 @@ def launch_xor_training(args):
         return 1
 
 
+def launch_text_training(args):
+    """Lance l'entraînement sur un dataset de classification de texte.
+    
+    Args:
+        args: Arguments de ligne de commande parsés
+    """
+    # Import training module
+    try:
+        from training import train_trlinkos_on_text_dataset
+    except ImportError as e:
+        print(f"✗ Erreur: impossible d'importer le module d'entraînement")
+        print(f"  Détails: {e}")
+        print("  Assurez-vous que PyTorch est installé: pip install torch")
+        return 1
+    
+    print("\n📊 Mode d'entraînement: Classification de TEXTE")
+    print("-" * 70)
+    
+    # Déterminer le device
+    if args.device is None:
+        device = detect_device()
+    else:
+        device = args.device
+        print(f"✓ Device spécifié: {device}")
+    
+    print()
+    print("⚙️ Configuration de l'entraînement:")
+    print(f"  • Dataset: Toy Text Dataset (classification sentiment)")
+    print(f"  • Classes: Positif (0) vs Négatif (1)")
+    print(f"  • Époques: {args.epochs}")
+    print(f"  • Batch size: {args.batch_size}")
+    print(f"  • Learning rate: {args.lr}")
+    print(f"  • Device: {device}")
+    print(f"  • Seed: {args.seed}")
+    print("-" * 70)
+    print()
+
+    # Déterminer la verbosité
+    verbose = not args.silent if not args.verbose else True
+
+    # Lancer l'entraînement
+    print("🚀 Démarrage de l'entraînement sur texte...")
+    print()
+
+    try:
+        model, history = train_trlinkos_on_text_dataset(
+            num_epochs=args.epochs,
+            batch_size=args.batch_size,
+            lr=args.lr,
+            device=device,
+            seed=args.seed,
+            verbose=verbose,
+        )
+
+        # Afficher le résumé
+        print()
+        print("=" * 70)
+        print(" " * 15 + "📈 RÉSUMÉ DE L'ENTRAÎNEMENT TEXTE")
+        print("=" * 70)
+        print()
+        print(f"✓ Entraînement terminé avec succès!")
+        print()
+        print(f"  • Loss finale (train): {history['train_loss'][-1]:.6f}")
+        print(f"  • Accuracy finale (train): {history['train_acc'][-1]:.2%}")
+        if history['val_loss'] and history['val_loss'][-1] > 0:
+            print(f"  • Loss finale (validation): {history['val_loss'][-1]:.6f}")
+            print(f"  • Accuracy finale (validation): {history['val_acc'][-1]:.2%}")
+        print()
+
+        # Déterminer le résultat
+        final_acc = history['train_acc'][-1]
+        if final_acc >= 0.95:
+            print("🎉 Excellent! Le modèle classifie très bien les textes!")
+        elif final_acc >= 0.85:
+            print("✓ Bon résultat! Le modèle a bien appris.")
+        elif final_acc >= 0.75:
+            print("⚠ Résultat moyen. Essayez d'augmenter le nombre d'époques.")
+        else:
+            print("✗ Résultat insuffisant. Vérifiez les hyperparamètres.")
+
+        print()
+        print("=" * 70)
+        
+        return 0
+
+    except KeyboardInterrupt:
+        print()
+        print("⚠ Entraînement interrompu par l'utilisateur")
+        return 130
+    except Exception as e:
+        print()
+        print(f"✗ Erreur lors de l'entraînement: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
+
+
+def launch_image_training(args):
+    """Lance l'entraînement sur un dataset de classification d'images.
+    
+    Args:
+        args: Arguments de ligne de commande parsés
+    """
+    # Import training module
+    try:
+        from training import train_trlinkos_on_image_dataset
+    except ImportError as e:
+        print(f"✗ Erreur: impossible d'importer le module d'entraînement")
+        print(f"  Détails: {e}")
+        print("  Assurez-vous que PyTorch est installé: pip install torch")
+        return 1
+    
+    print("\n📊 Mode d'entraînement: Classification d'IMAGES")
+    print("-" * 70)
+    
+    # Déterminer le device
+    if args.device is None:
+        device = detect_device()
+    else:
+        device = args.device
+        print(f"✓ Device spécifié: {device}")
+    
+    print()
+    print("⚙️ Configuration de l'entraînement:")
+    print(f"  • Dataset: Images synthétiques (28x28 RGB)")
+    print(f"  • Classes: Clair (0) vs Sombre (1)")
+    print(f"  • Époques: {args.epochs}")
+    print(f"  • Batch size: {args.batch_size}")
+    print(f"  • Learning rate: {args.lr}")
+    print(f"  • Device: {device}")
+    print(f"  • Seed: {args.seed}")
+    print("-" * 70)
+    print()
+
+    # Déterminer la verbosité
+    verbose = not args.silent if not args.verbose else True
+
+    # Lancer l'entraînement
+    print("🚀 Démarrage de l'entraînement sur images...")
+    print()
+
+    try:
+        model, history = train_trlinkos_on_image_dataset(
+            num_epochs=args.epochs,
+            batch_size=args.batch_size,
+            lr=args.lr,
+            device=device,
+            seed=args.seed,
+            verbose=verbose,
+        )
+
+        # Afficher le résumé
+        print()
+        print("=" * 70)
+        print(" " * 15 + "📈 RÉSUMÉ DE L'ENTRAÎNEMENT IMAGE")
+        print("=" * 70)
+        print()
+        print(f"✓ Entraînement terminé avec succès!")
+        print()
+        print(f"  • Loss finale (train): {history['train_loss'][-1]:.6f}")
+        print(f"  • Accuracy finale (train): {history['train_acc'][-1]:.2%}")
+        if history['val_loss'] and history['val_loss'][-1] > 0:
+            print(f"  • Loss finale (validation): {history['val_loss'][-1]:.6f}")
+            print(f"  • Accuracy finale (validation): {history['val_acc'][-1]:.2%}")
+        print()
+
+        # Déterminer le résultat
+        final_acc = history['train_acc'][-1]
+        if final_acc >= 0.95:
+            print("🎉 Excellent! Le modèle classifie très bien les images!")
+        elif final_acc >= 0.85:
+            print("✓ Bon résultat! Le modèle a bien appris.")
+        elif final_acc >= 0.75:
+            print("⚠ Résultat moyen. Essayez d'augmenter le nombre d'époques.")
+        else:
+            print("✗ Résultat insuffisant. Vérifiez les hyperparamètres.")
+
+        print()
+        print("=" * 70)
+        
+        return 0
+
+    except KeyboardInterrupt:
+        print()
+        print("⚠ Entraînement interrompu par l'utilisateur")
+        return 130
+    except Exception as e:
+        print()
+        print(f"✗ Erreur lors de l'entraînement: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
+
+
 def main():
     """Point d'entrée principal."""
     args = parse_args()
@@ -221,6 +415,10 @@ def main():
     # Lancer l'entraînement selon le mode
     if args.mode == "xor":
         return launch_xor_training(args)
+    elif args.mode == "text":
+        return launch_text_training(args)
+    elif args.mode == "image":
+        return launch_image_training(args)
     else:
         print(f"✗ Mode non supporté: {args.mode}")
         return 1
