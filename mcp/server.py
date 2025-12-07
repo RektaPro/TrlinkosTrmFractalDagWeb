@@ -61,6 +61,7 @@ from t_rlinkos_trm_fractal_dag import (
 
 # Import system tools
 from mcp.tools import system as system_tools
+from mcp.tools.reasoning import VALID_METRICS
 
 # Configure logging
 logging.basicConfig(
@@ -242,11 +243,21 @@ class TRLinkosMCPServer:
         # Encode x
         try:
             x_enc = self.model.x_encoder(x_np)
-        except Exception as e:
+        except (ValueError, TypeError, RuntimeError, ArithmeticError) as e:
             return {
                 "status": "error",
                 "error": f"ENCODING ERROR: Failed to encode input x: {str(e)}",
                 "computation_failed": True,
+                "exception_type": type(e).__name__,
+            }
+        except Exception as e:
+            # Catch unexpected exceptions but log for debugging
+            logger.error(f"Unexpected exception during encoding: {type(e).__name__}: {e}")
+            return {
+                "status": "error",
+                "error": f"ENCODING ERROR: Unexpected error during encoding: {str(e)}",
+                "computation_failed": True,
+                "exception_type": type(e).__name__,
             }
 
         # Execute step
@@ -254,11 +265,21 @@ class TRLinkosMCPServer:
             y_next, z_next = self.model.core.step_reasoning(
                 x_enc, y_np, z_np, inner_recursions=inner_recursions
             )
-        except Exception as e:
+        except (ValueError, TypeError, RuntimeError, ArithmeticError) as e:
             return {
                 "status": "error",
                 "error": f"COMPUTATION ERROR: Reasoning step failed: {str(e)}",
                 "computation_failed": True,
+                "exception_type": type(e).__name__,
+            }
+        except Exception as e:
+            # Catch unexpected exceptions but log for debugging
+            logger.error(f"Unexpected exception during reasoning: {type(e).__name__}: {e}")
+            return {
+                "status": "error",
+                "error": f"COMPUTATION ERROR: Unexpected error during reasoning: {str(e)}",
+                "computation_failed": True,
+                "exception_type": type(e).__name__,
             }
         
         # TRUTHFUL VALIDATION: Verify outputs are valid
@@ -593,11 +614,10 @@ class TRLinkosMCPServer:
             Dict with score and metric info
         """
         # STRICT VALIDATION: Check metric is valid
-        valid_metrics = ["mse", "cosine", "mae"]
-        if metric not in valid_metrics:
+        if metric not in VALID_METRICS:
             return {
                 "status": "error",
-                "error": f"VALIDATION ERROR: Unknown metric '{metric}'. Valid options: {valid_metrics}",
+                "error": f"VALIDATION ERROR: Unknown metric '{metric}'. Valid options: {VALID_METRICS}",
                 "validation_failed": True,
             }
         

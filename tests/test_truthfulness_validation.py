@@ -97,7 +97,8 @@ def test_truthful_reporting():
     
     # Test 1: Command with non-zero exit code
     print("\n1. Testing command with failure exit code...")
-    result = server.execute_command("python -c 'import sys; sys.exit(1)'")
+    # Use 'false' command which is universally available on Unix-like systems
+    result = server.execute_command("sh -c 'exit 1'")
     assert result["status"] == "error", "Should report error for non-zero exit"
     assert result["return_code"] == 1, "Should report actual return code"
     assert "truthful_report" in result, "Should mark as truthful report"
@@ -105,7 +106,8 @@ def test_truthful_reporting():
     
     # Test 2: Command success
     print("\n2. Testing command with success exit code...")
-    result = server.execute_command("python -c 'print(\"test\")'")
+    # Use 'echo' command which is universally available
+    result = server.execute_command("echo test")
     assert result["status"] == "success", "Should report success for zero exit"
     assert result["return_code"] == 0, "Should report actual return code"
     assert "truthful_report" in result, "Should mark as truthful report"
@@ -143,12 +145,13 @@ def test_truthful_reporting():
     
     # Test 5: Command existence
     print("\n5. Testing command existence reporting...")
-    result = server.check_command_exists("python")
+    # Use 'sh' command which is universally available on Unix-like systems
+    result = server.check_command_exists("sh")
     assert result["status"] == "success", "Should succeed"
-    assert result["exists"] == True, "Python should exist"
+    assert result["exists"] == True, "sh should exist"
     assert result["path"] is not None, "Should have path"
     assert "truthful_report" in result, "Should mark as truthful report"
-    print(f"   ✓ Truthfully reported python exists at: {result['path']}")
+    print(f"   ✓ Truthfully reported sh exists at: {result['path']}")
     
     print("\n" + "=" * 60)
     print("✓ All truthful reporting tests passed!")

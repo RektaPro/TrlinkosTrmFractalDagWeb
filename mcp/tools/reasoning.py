@@ -10,6 +10,9 @@ This module enforces strict truthfulness and accuracy in all AI operations:
 from typing import Any, Dict, List, Optional
 import numpy as np
 
+# Valid metrics for score evaluation
+VALID_METRICS = ["mse", "cosine", "mae"]
+
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -331,11 +334,10 @@ def evaluate_score(
         Dict with score and metric info
     """
     # STRICT VALIDATION: Check metric is valid
-    valid_metrics = ["mse", "cosine", "mae"]
-    if metric not in valid_metrics:
+    if metric not in VALID_METRICS:
         return {
             "status": "error",
-            "error": f"VALIDATION ERROR: Unknown metric '{metric}'. Valid options: {valid_metrics}",
+            "error": f"VALIDATION ERROR: Unknown metric '{metric}'. Valid options: {VALID_METRICS}",
             "validation_failed": True,
         }
     
