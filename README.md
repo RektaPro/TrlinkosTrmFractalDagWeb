@@ -3,6 +3,9 @@
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
 [![NumPy](https://img.shields.io/badge/NumPy-1.20%2B-blue.svg)](https://numpy.org/)
+[![CI](https://github.com/RektaPro/TrlinkosTrmFractalDagWeb/workflows/CI/badge.svg)](https://github.com/RektaPro/TrlinkosTrmFractalDagWeb/actions)
+[![codecov](https://codecov.io/gh/RektaPro/TrlinkosTrmFractalDagWeb/branch/main/graph/badge.svg)](https://codecov.io/gh/RektaPro/TrlinkosTrmFractalDagWeb)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 **T-RLINKOS TRM++ (Tiny Recursive Linkos Model ++)** is a pure NumPy implementation of a recursive reasoning architecture inspired by neuroscience research and modern clustering techniques. Now enhanced with **AI Architecture Blueprints** for production-ready deployments.
 
@@ -1570,3 +1573,65 @@ The following documentation is planned for future releases:
 | DCAAPCELL_TECHNOTE.md | Technical note on dCaAP neuron implementation | 🔲 Planned |
 | TORQUE_ROUTER_NOTE.md | Technical note on Torque Clustering router | 🔲 Planned |
 | FRACTAL_DAG_SCIENTIFIC_NOTE.md | Scientific note on Fractal Merkle-DAG structure | 🔲 Planned |
+
+## 🛠️ Development
+
+### CI/CD Pipeline
+
+The project uses GitHub Actions for continuous integration and deployment:
+
+- **Automated Testing**: Tests run on Python 3.8, 3.9, 3.10, 3.11, and 3.12
+- **Code Quality**: Automatic linting with Black, isort, and Flake8
+- **Coverage Reporting**: Code coverage tracked and reported to Codecov
+- **Security Checks**: Bandit and Safety security scanning
+
+### Pre-commit Hooks
+
+Pre-commit hooks ensure code quality before commits:
+
+```bash
+# Install pre-commit hooks
+pip install pre-commit
+pre-commit install
+
+# Run hooks manually
+pre-commit run --all-files
+```
+
+Configured hooks:
+- Code formatting (Black, isort)
+- Linting (Flake8)
+- Security checks (Bandit)
+- File consistency checks
+
+### Development Setup
+
+```bash
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Run tests
+make test
+
+# Run tests with coverage
+make test-cov
+
+# Format code
+make format
+
+# Run linters
+make lint
+```
+
+For detailed contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### Code Quality Tools
+
+| Tool | Purpose | Configuration |
+|------|---------|---------------|
+| Black | Code formatter | `pyproject.toml` |
+| isort | Import sorter | `pyproject.toml` |
+| Flake8 | Linter | `.flake8` |
+| Pytest | Testing framework | `pyproject.toml` |
+| Coverage | Code coverage | `.coveragerc` |
+| Bandit | Security linter | `.pre-commit-config.yaml` |
