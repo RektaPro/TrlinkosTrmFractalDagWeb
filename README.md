@@ -4,7 +4,7 @@
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
 [![NumPy](https://img.shields.io/badge/NumPy-1.20%2B-blue.svg)](https://numpy.org/)
 
-**T-RLINKOS TRM++ (Tiny Recursive Linkos Model ++)** is a pure NumPy implementation of a recursive reasoning architecture inspired by neuroscience research and modern clustering techniques.
+**T-RLINKOS TRM++ (Tiny Recursive Linkos Model ++)** is a pure NumPy implementation of a recursive reasoning architecture inspired by neuroscience research and modern clustering techniques. Now enhanced with **AI Architecture Blueprints** for production-ready deployments.
 
 ## 🧠 Overview
 
@@ -14,8 +14,66 @@ This project implements a recursive reasoning model that combines:
 - **Torque Clustering router** for expert selection based on [Yang & Lin, TPAMI 2025](https://github.com/JieYangBruce/TorqueClustering)
 - **Fractal Merkle-DAG** for reasoning trace auditing and backtracking
 - **Mixture of Experts (MoE)** architecture with biologically-inspired activation functions
+- **🆕 AI Architecture Blueprints** - Enterprise-grade safety, observability, and resilience
 
 The model is designed to be **framework-agnostic**, using only NumPy for computation, making it portable and easy to understand.
+
+## 🎯 AI Architecture Blueprints Integration
+
+T-RLINKOS TRM++ now integrates **4 key patterns** from [THE-BLUEPRINTS.md](THE-BLUEPRINTS.md) to provide production-ready AI:
+
+1. **Safety Guardrails Pattern** - Input/output validation and sanitization
+2. **AI Observability Pattern** - Real-time metrics and health monitoring
+3. **Resilient Workflow Pattern** - Automatic retry and circuit breakers
+4. **Goal Monitoring Pattern** - Progress tracking toward objectives
+
+See [BLUEPRINTS_INTEGRATION.md](BLUEPRINTS_INTEGRATION.md) for complete documentation.
+
+### Quick Start with Enhanced TRM
+
+```python
+from t_rlinkos_trm_fractal_dag import TRLinkosTRM
+from blueprints import EnhancedTRLinkosTRM, EnhancedTRMConfig
+import numpy as np
+
+# Create base model
+base_model = TRLinkosTRM(64, 32, 64)
+
+# Wrap with enterprise features
+config = EnhancedTRMConfig(
+    enable_safety_guardrails=True,
+    enable_observability=True,
+    enable_resilient_workflow=True,
+)
+model = EnhancedTRLinkosTRM(base_model, config)
+
+# Safe inference with automatic validation and monitoring
+x = np.random.randn(8, 64)
+result = model.forward_safe(x, max_steps=10)
+
+if result["success"]:
+    print(f"✓ Predictions: {result['predictions'].shape}")
+    print(f"✓ Latency: {result['metrics']['latency_ms']:.2f}ms")
+    print(f"✓ Validation: {result['validation_reports']['input']['result']}")
+else:
+    print(f"✗ Error: {result['error']}")
+
+# Get metrics dashboard
+dashboard = model.get_dashboard()
+print(f"Health: {dashboard['health']['is_healthy']}")
+```
+
+### Enhanced API Server
+
+```bash
+# Start enhanced API with all blueprint features
+python api_enhanced.py
+
+# Access endpoints
+curl http://localhost:8000/health/detailed   # Detailed health check
+curl http://localhost:8000/metrics           # Observability metrics
+curl http://localhost:8000/dashboard         # Complete dashboard
+```
 
 ## 🔌 MCP Integration (Model Context Protocol)
 
@@ -186,6 +244,19 @@ TrlinkosTrmFractalDagWeb/
 ├── trlinkos_llm_layer.py          # LLM reasoning layer integration
 ├── empirical_validation.py        # Empirical validation suite
 ├── api.py                         # FastAPI web API
+├── api_enhanced.py                # 🆕 Enhanced API with blueprints
+├── THE-BLUEPRINTS.md              # AI Architecture Blueprints documentation
+├── BLUEPRINTS_INTEGRATION.md      # 🆕 Blueprint integration guide
+├── blueprints/                    # 🆕 AI Architecture Blueprints package
+│   ├── __init__.py
+│   ├── safety_guardrails.py       # Input/output validation
+│   ├── observability.py           # Metrics and health monitoring
+│   ├── resilient_workflow.py      # Retry and circuit breakers
+│   ├── goal_monitoring.py         # Progress tracking
+│   └── enhanced_trm.py            # Enhanced TRM wrapper
+├── examples/                      # 🆕 Example scripts
+│   ├── __init__.py
+│   └── blueprints_demo.py         # Complete blueprint demonstration
 ├── mcp.json                       # MCP manifest (tool definitions)
 ├── mcp/                           # MCP Server Package
 │   ├── __init__.py
@@ -1405,6 +1476,8 @@ Complete documentation available in this repository:
 
 | Document | Description |
 |----------|-------------|
+| [BLUEPRINTS_INTEGRATION.md](BLUEPRINTS_INTEGRATION.md) | 🆕 AI Architecture Blueprints integration guide |
+| [THE-BLUEPRINTS.md](THE-BLUEPRINTS.md) | AI Architecture Blueprints patterns catalog |
 | [AUDIT_COHERENCE.md](AUDIT_COHERENCE.md) | Promise/implementation coherence audit (French) |
 | [ANALYSE_IMPACT_TECHNOLOGIQUE.md](ANALYSE_IMPACT_TECHNOLOGIQUE.md) | Detailed technological impact analysis (French) |
 | [ANALYSE_IMPACT_CONNEXION_INTERNET.md](ANALYSE_IMPACT_CONNEXION_INTERNET.md) | Internet connectivity risk analysis (French) |
