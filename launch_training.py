@@ -152,7 +152,7 @@ def launch_xor_training(args):
     print()
 
     # Déterminer la verbosité
-    verbose = not args.silent if not args.verbose else True
+    verbose = args.verbose if args.verbose else not args.silent
 
     # Lancer l'entraînement
     print("🚀 Démarrage de l'entraînement...")
@@ -178,7 +178,7 @@ def launch_xor_training(args):
         print()
         print(f"  • Loss finale (train): {history['train_loss'][-1]:.6f}")
         print(f"  • Accuracy finale (train): {history['train_acc'][-1]:.2%}")
-        if history['val_loss'] and history['val_loss'][-1] > 0:
+        if history['val_loss'] and len(history['val_loss']) > 0:
             print(f"  • Loss finale (validation): {history['val_loss'][-1]:.6f}")
             print(f"  • Accuracy finale (validation): {history['val_acc'][-1]:.2%}")
         print()
@@ -249,7 +249,7 @@ def launch_text_training(args):
     print()
 
     # Déterminer la verbosité
-    verbose = not args.silent if not args.verbose else True
+    verbose = args.verbose if args.verbose else not args.silent
 
     # Lancer l'entraînement
     print("🚀 Démarrage de l'entraînement sur texte...")
@@ -275,7 +275,7 @@ def launch_text_training(args):
         print()
         print(f"  • Loss finale (train): {history['train_loss'][-1]:.6f}")
         print(f"  • Accuracy finale (train): {history['train_acc'][-1]:.2%}")
-        if history['val_loss'] and history['val_loss'][-1] > 0:
+        if history['val_loss'] and len(history['val_loss']) > 0:
             print(f"  • Loss finale (validation): {history['val_loss'][-1]:.6f}")
             print(f"  • Accuracy finale (validation): {history['val_acc'][-1]:.2%}")
         print()
@@ -346,7 +346,7 @@ def launch_image_training(args):
     print()
 
     # Déterminer la verbosité
-    verbose = not args.silent if not args.verbose else True
+    verbose = args.verbose if args.verbose else not args.silent
 
     # Lancer l'entraînement
     print("🚀 Démarrage de l'entraînement sur images...")
@@ -372,7 +372,7 @@ def launch_image_training(args):
         print()
         print(f"  • Loss finale (train): {history['train_loss'][-1]:.6f}")
         print(f"  • Accuracy finale (train): {history['train_acc'][-1]:.2%}")
-        if history['val_loss'] and history['val_loss'][-1] > 0:
+        if history['val_loss'] and len(history['val_loss']) > 0:
             print(f"  • Loss finale (validation): {history['val_loss'][-1]:.6f}")
             print(f"  • Accuracy finale (validation): {history['val_acc'][-1]:.2%}")
         print()

@@ -516,7 +516,7 @@ def train_trlinkos_on_text_dataset(
             preds = (probs > 0.5).float()
 
         for i, text in enumerate(test_texts):
-            pred_label = "négatif" if preds[i].item() == 1 else "positif"
+            pred_label = "positif" if preds[i].item() == 0 else "négatif"
             print(f"  '{text}' -> {pred_label} (prob: {probs[i].item():.2f})")
 
     return model, history
