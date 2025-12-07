@@ -46,6 +46,11 @@ python mcp/server.py --http --port 8080
 | `evaluate_score` | Evaluate prediction scores (MSE, cosine, MAE) |
 | `load_model` / `save_model` | Model persistence |
 | `get_repo_state` / `write_repo_state` | File operations |
+| `execute_command` | Execute system commands |
+| `get_system_info` | Get system information (OS, Python version, etc.) |
+| `list_directory` | List directory contents |
+| `get_environment_variable` | Get environment variable values |
+| `check_command_exists` | Check if a command exists in PATH |
 
 ### MCP Configuration
 
@@ -65,6 +70,42 @@ result = server.run_trm_recursive(
 )
 print(f"Prediction: {result['y_pred']}")
 print(f"DAG nodes: {result['dag_stats']['num_nodes']}")
+
+# Execute system commands
+result = server.execute_command("python --version")
+print(f"Python version: {result['stdout']}")
+
+# Get system information
+result = server.get_system_info()
+print(f"OS: {result['system']['os']}")
+print(f"Python: {result['system']['python_version']}")
+```
+
+#### System Tools
+
+The MCP server now includes system interaction tools that enable:
+
+- **Command Execution**: Run system commands securely with timeout and environment control
+- **System Information**: Query OS details, Python version, and environment variables
+- **File System Operations**: List directories and check command availability
+- **Environment Access**: Read environment variables and check system state
+
+Example system tool usage:
+
+```python
+# Check if a command exists
+result = server.check_command_exists("python")
+if result["exists"]:
+    print(f"Python found at: {result['path']}")
+
+# Execute a command with timeout
+result = server.execute_command("ls -la", timeout=10)
+print(result["stdout"])
+
+# List directory contents
+result = server.list_directory("/home/user/project")
+for entry in result["entries"]:
+    print(f"{entry['name']} - {entry['type']}")
 ```
 
 ### MCP Architecture
@@ -84,7 +125,12 @@ print(f"DAG nodes: {result['dag_stats']['num_nodes']}")
 │  │ - run_recursive │  │ - dag_best_path │  │ - save_model│  │
 │  │ - torque_route  │  │ - fractal_branch│  └─────────────┘  │
 │  │ - dcaap_forward │  └─────────────────┘                   │
-│  └─────────────────┘                                        │
+│  └─────────────────┘  ┌─────────────────┐  ┌─────────────┐  │
+│                       │  System Tools   │  │  File Tools │  │
+│                       │ - execute_cmd   │  │ - get_repo  │  │
+│                       │ - system_info   │  │ - write_repo│  │
+│                       │ - list_dir      │  └─────────────┘  │
+│                       └─────────────────┘                   │
 └─────────────────────────┬───────────────────────────────────┘
                           │
                           ▼

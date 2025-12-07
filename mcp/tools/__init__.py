@@ -26,6 +26,14 @@ from .repo import (
     write_repo_state,
 )
 
+from .system import (
+    execute_command,
+    get_system_info,
+    list_directory,
+    get_environment_variable,
+    check_command_exists,
+)
+
 __all__ = [
     "reason_step",
     "run_trm_recursive",
@@ -41,4 +49,9 @@ __all__ = [
     "get_model_config",
     "get_repo_state",
     "write_repo_state",
+    "execute_command",
+    "get_system_info",
+    "list_directory",
+    "get_environment_variable",
+    "check_command_exists",
 ]

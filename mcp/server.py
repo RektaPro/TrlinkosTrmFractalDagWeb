@@ -17,6 +17,11 @@ Tools exposed:
 - evaluate_score: Score predictions
 - load_model / save_model: Model persistence
 - get_repo_state / write_repo_state: File operations
+- execute_command: Execute system commands
+- get_system_info: Get system information
+- list_directory: List directory contents
+- get_environment_variable: Get environment variables
+- check_command_exists: Check command availability
 
 Usage:
     python mcp/server.py
@@ -53,6 +58,9 @@ from t_rlinkos_trm_fractal_dag import (
     mse_loss,
     cosine_similarity_loss,
 )
+
+# Import system tools
+from mcp.tools import system as system_tools
 
 # Configure logging
 logging.basicConfig(
@@ -608,6 +616,67 @@ class TRLinkosMCPServer:
         except Exception as e:
             return {"status": "error", "error": str(e)}
 
+    def execute_command(
+        self,
+        command: str,
+        timeout: int = 30,
+        cwd: Optional[str] = None,
+        env: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
+        """Execute a system command.
+
+        Args:
+            command: Command to execute
+            timeout: Timeout in seconds
+            cwd: Working directory
+            env: Environment variables
+
+        Returns:
+            Dict with command output and status
+        """
+        return system_tools.execute_command(command, timeout, cwd, env)
+
+    def get_system_info(self) -> Dict[str, Any]:
+        """Get system information.
+
+        Returns:
+            Dict with system information
+        """
+        return system_tools.get_system_info()
+
+    def list_directory(self, path: str = ".") -> Dict[str, Any]:
+        """List directory contents.
+
+        Args:
+            path: Directory path
+
+        Returns:
+            Dict with directory listing
+        """
+        return system_tools.list_directory(path)
+
+    def get_environment_variable(self, name: str) -> Dict[str, Any]:
+        """Get an environment variable value.
+
+        Args:
+            name: Environment variable name
+
+        Returns:
+            Dict with variable value
+        """
+        return system_tools.get_environment_variable(name)
+
+    def check_command_exists(self, command: str) -> Dict[str, Any]:
+        """Check if a command exists in the system PATH.
+
+        Args:
+            command: Command name to check
+
+        Returns:
+            Dict with existence status and path
+        """
+        return system_tools.check_command_exists(command)
+
     # ==================== MCP Protocol Methods ====================
 
     def handle_tool_call(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
@@ -634,6 +703,11 @@ class TRLinkosMCPServer:
             "save_model": self.save_model,
             "get_repo_state": self.get_repo_state,
             "write_repo_state": self.write_repo_state,
+            "execute_command": self.execute_command,
+            "get_system_info": self.get_system_info,
+            "list_directory": self.list_directory,
+            "get_environment_variable": self.get_environment_variable,
+            "check_command_exists": self.check_command_exists,
         }
 
         if tool_name not in tool_map:
