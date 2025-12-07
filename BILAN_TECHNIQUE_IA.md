@@ -1,6 +1,6 @@
 # Bilan Technique : T-RLINKOS TRM++ - Est-ce une Intelligence Artificielle ?
 
-**Date d'analyse :** 7 décembre 2025  
+**Date d'analyse :** Décembre 2024  
 **Analyste :** Expert en informatique et IA  
 **Version du projet :** T-RLINKOS TRM++ (Tiny Recursive Linkos Model ++)
 
@@ -1223,7 +1223,7 @@ où:
 ---
 
 **Document préparé par :** Expert IA indépendant  
-**Date :** 7 décembre 2025  
+**Date :** Décembre 2024  
 **Version :** 1.0  
 **Statut :** FINAL
 
