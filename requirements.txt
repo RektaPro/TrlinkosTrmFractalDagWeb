@@ -16,14 +16,14 @@ numba>=0.55.0
 # PyTorch version (optional, for GPU acceleration)
 # The core NumPy implementation works without PyTorch.
 # Uncomment below for GPU support with trlinkos_trm_torch.py:
-# torch>=2.0.0
+torch>=2.0.0
 
 # LLM integration (optional)
 # Uncomment for HuggingFace adapter support in trlinkos_llm_layer.py:
-# transformers>=4.30.0
+transformers>=4.30.0
 
 # ONNX export (optional, for production deployment)
 # Uncomment below for ONNX export functionality:
-# onnx>=1.12.0
-# onnxruntime>=1.12.0
-# onnx-simplifier  # Optional: for ONNX model optimization
+onnx>=1.12.0
+onnxruntime>=1.12.0
+# onnx-simplifier  # Optional: for ONNX model optimization (may have installation issues)

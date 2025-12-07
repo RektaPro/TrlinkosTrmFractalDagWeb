@@ -164,12 +164,27 @@ def matmul_add_jit(x: np.ndarray, W: np.ndarray, b: np.ndarray) -> np.ndarray:
 
 
 @jit(nopython=True, fastmath=True, cache=True)
+def _softmax_jit_2d(x: np.ndarray) -> np.ndarray:
+    """JIT-compiled stable softmax for 2D arrays along last axis.
+    
+    Performance: ~2x faster than pure NumPy.
+    """
+    result = np.empty_like(x)
+    for i in range(x.shape[0]):
+        row = x[i, :]
+        max_val = np.max(row)
+        exp_row = np.exp(row - max_val)
+        sum_exp = np.sum(exp_row)
+        result[i, :] = exp_row / sum_exp
+    return result
+
+
 def softmax_jit(x: np.ndarray, axis: int = -1) -> np.ndarray:
     """JIT-compiled stable softmax.
     
     Uses the max subtraction trick for numerical stability.
     
-    Performance: ~2x faster than pure NumPy.
+    Performance: ~2x faster than pure NumPy for 2D arrays.
     
     Args:
         x: Input array
@@ -178,16 +193,9 @@ def softmax_jit(x: np.ndarray, axis: int = -1) -> np.ndarray:
     Returns:
         Softmax probabilities
     """
-    # For 2D arrays along last axis (most common case)
+    # For 2D arrays along last axis (most common case) - use JIT version
     if x.ndim == 2 and axis == -1:
-        result = np.empty_like(x)
-        for i in range(x.shape[0]):
-            row = x[i, :]
-            max_val = np.max(row)
-            exp_row = np.exp(row - max_val)
-            sum_exp = np.sum(exp_row)
-            result[i, :] = exp_row / sum_exp
-        return result
+        return _softmax_jit_2d(x)
     else:
         # Fall back to standard computation for other cases
         x_max = np.max(x, axis=axis, keepdims=True)
