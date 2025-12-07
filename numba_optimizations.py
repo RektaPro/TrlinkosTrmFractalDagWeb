@@ -179,6 +179,9 @@ def _softmax_jit_2d(x: np.ndarray) -> np.ndarray:
     return result
 
 
+# Note: This wrapper function is NOT JIT-compiled intentionally.
+# It dispatches to the JIT-compiled version for 2D arrays and falls back
+# to NumPy for other cases (Numba doesn't support axis/keepdims parameters).
 def softmax_jit(x: np.ndarray, axis: int = -1) -> np.ndarray:
     """JIT-compiled stable softmax.
     
