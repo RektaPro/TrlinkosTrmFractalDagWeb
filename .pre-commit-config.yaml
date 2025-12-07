@@ -50,7 +50,7 @@ repos:
     rev: 1.7.6
     hooks:
       - id: bandit
-        args: ['-ll', '-i']
+        args: ['-l', '--skip', 'B101,B601']
         files: ^(?!tests/).*\.py$
 
   # Type checking (optional, can be commented out if too strict)
