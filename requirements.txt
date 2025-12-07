@@ -1,6 +1,12 @@
 # Core dependencies
 numpy>=1.20.0
 
+# THRML dependencies (Thermodynamic Hypergraphical Model Library)
+equinox>=0.11.2
+jaxtyping>=0.2.23
+jax>=0.4.0
+jaxlib>=0.4.0
+
 # Testing
 pytest>=7.0.0
 
