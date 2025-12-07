@@ -335,6 +335,83 @@
         },
         "required": ["path", "content"]
       }
+    },
+    {
+      "name": "execute_command",
+      "description": "Execute a system command and return its output.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "Command to execute"
+          },
+          "timeout": {
+            "type": "integer",
+            "default": 30,
+            "description": "Timeout in seconds"
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Working directory (optional)"
+          },
+          "env": {
+            "type": "object",
+            "description": "Environment variables (optional)"
+          }
+        },
+        "required": ["command"]
+      }
+    },
+    {
+      "name": "get_system_info",
+      "description": "Get system information including OS, Python version, and environment details.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "list_directory",
+      "description": "List contents of a directory with file information.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "default": ".",
+            "description": "Directory path (default: current directory)"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_environment_variable",
+      "description": "Get the value of an environment variable.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Environment variable name"
+          }
+        },
+        "required": ["name"]
+      }
+    },
+    {
+      "name": "check_command_exists",
+      "description": "Check if a command exists in the system PATH.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "Command name to check"
+          }
+        },
+        "required": ["command"]
+      }
     }
   ],
   "resources": [
