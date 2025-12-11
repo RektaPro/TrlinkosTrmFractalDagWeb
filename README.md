@@ -1715,12 +1715,10 @@ Complete documentation available in this repository:
 | [CI_CD.md](CI_CD.md) | 🆕 **CI/CD Pipeline, Pre-commit Hooks, and Code Quality Guide** |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 🆕 **Development Guidelines and Contribution Workflow** |
 | [BILAN_TECHNIQUE_IA.md](BILAN_TECHNIQUE_IA.md) | 🆕 **Comprehensive technical analysis: Is T-RLINKOS an AI?** (French) |
+| [ANALYSE_IMPACT_TECHNOLOGIQUE.md](ANALYSE_IMPACT_TECHNOLOGIQUE.md) | 🆕 **Complete ruthless technology impact analysis - Expert R&D assessment** (French) |
 | [BLUEPRINTS_INTEGRATION.md](BLUEPRINTS_INTEGRATION.md) | AI Architecture Blueprints integration guide |
 | [THE-BLUEPRINTS.md](THE-BLUEPRINTS.md) | AI Architecture Blueprints patterns catalog |
 | [AUDIT_COHERENCE.md](AUDIT_COHERENCE.md) | Promise/implementation coherence audit (French) |
-| [ANALYSE_IMPACT_TECHNOLOGIQUE.md](ANALYSE_IMPACT_TECHNOLOGIQUE.md) | Detailed technological impact analysis (French) |
-| [ANALYSE_IMPACT_CONNEXION_INTERNET.md](ANALYSE_IMPACT_CONNEXION_INTERNET.md) | Internet connectivity risk analysis (French) |
-| [ANALYSE_COMPARATIVE_HONNETE_LLM.md](ANALYSE_COMPARATIVE_HONNETE_LLM.md) | Honest comparison with LLMs - no concessions (French) |
 
 ### Future Documentation (Roadmap)
 
