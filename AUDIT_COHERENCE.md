@@ -1266,7 +1266,7 @@ Le projet T-RLINKOS TRM Fractal DAG présente une **cohérence structurelle parf
 - ✨ **3 nouveaux tests** - Couverture améliorée
 - ✨ **1 outil MCP supplémentaire** - System tools
 
-**Total:** +20 fichiers depuis v2.0.0 (de 35 à 55 fichiers Python)
+**Total:** +20 fichiers depuis v2.0.0 (de 34 à 54 fichiers Python)
 
 ### Points Forts du Projet
 
