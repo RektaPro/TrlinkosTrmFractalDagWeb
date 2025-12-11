@@ -169,9 +169,10 @@ def _softmax_jit_2d(x: np.ndarray) -> np.ndarray:
     
     Performance: ~2x faster than pure NumPy.
     """
-    result = np.empty_like(x)
+    # Ensure float type for numerical stability
+    result = np.empty(x.shape, dtype=np.float64)
     for i in range(x.shape[0]):
-        row = x[i, :]
+        row = x[i, :].astype(np.float64)
         max_val = np.max(row)
         exp_row = np.exp(row - max_val)
         sum_exp = np.sum(exp_row)
@@ -196,6 +197,8 @@ def softmax_jit(x: np.ndarray, axis: int = -1) -> np.ndarray:
     Returns:
         Softmax probabilities
     """
+    # Ensure float type for numerical stability
+    x = np.asarray(x, dtype=np.float64)
     # For 2D arrays along last axis (most common case) - use JIT version
     if x.ndim == 2 and axis == -1:
         return _softmax_jit_2d(x)

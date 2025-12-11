@@ -89,6 +89,7 @@ def softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     """
     if USE_NUMBA and NUMBA_AVAILABLE and axis == -1:
         return softmax_jit(x, axis)
+    x = np.asarray(x, dtype=np.float64)  # Ensure float type for numerical stability
     x_max = np.max(x, axis=axis, keepdims=True)
     e = np.exp(x - x_max)
     return e / np.sum(e, axis=axis, keepdims=True)
