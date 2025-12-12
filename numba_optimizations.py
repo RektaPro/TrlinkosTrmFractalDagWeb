@@ -169,11 +169,10 @@ def _softmax_jit_2d(x: np.ndarray) -> np.ndarray:
     
     Performance: ~2x faster than pure NumPy.
     """
-    # Convert entire array to float64 once for numerical stability
-    x_float = x.astype(np.float64)
+    # Input is already float64 for numerical stability (see wrapper)
     result = np.empty(x.shape, dtype=np.float64)
-    for i in range(x_float.shape[0]):
-        row = x_float[i, :]
+    for i in range(x.shape[0]):
+        row = x[i, :]
         max_val = np.max(row)
         exp_row = np.exp(row - max_val)
         sum_exp = np.sum(exp_row)
