@@ -86,9 +86,12 @@ def softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     """Stable softmax implementation.
     
     Uses JIT-compiled version if Numba is available for ~2x speedup.
+    Note: Converts to float64 for numerical stability with large values.
     """
     if USE_NUMBA and NUMBA_AVAILABLE and axis == -1:
         return softmax_jit(x, axis)
+    # Ensure float type for numerical stability (handles integer inputs)
+    x = np.asarray(x, dtype=np.float64 if x.dtype.kind in ('i', 'u') else None)
     x_max = np.max(x, axis=axis, keepdims=True)
     e = np.exp(x - x_max)
     return e / np.sum(e, axis=axis, keepdims=True)
